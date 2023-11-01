@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IRubie.sol";
-import "./ERC20.sol";
+/// @dev This contract must implement the IRubie interface
+contract Rubie {
 
-abstract contract Rubie is IRubie, ERC20 {}
+}
