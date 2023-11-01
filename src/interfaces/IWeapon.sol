@@ -22,7 +22,6 @@ interface IWeapon is IERC721 {
         uint256 characterID;
         uint256 attackPoints;
         uint256 armorPonits;
-        uint256[3] weapon;
         uint256 sellPrice;
         uint256 requiredExperience;
         string name;
