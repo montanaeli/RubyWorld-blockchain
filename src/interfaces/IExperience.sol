@@ -85,3 +85,4 @@ interface IExperience {
     /// @param _price It is the new price of the token
     function setPrice(uint256 _price) external;
 }
+`
