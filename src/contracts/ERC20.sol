@@ -11,8 +11,6 @@ contract ERC20 is IERC20 {
     uint256 public decimals;
     uint256 public price;
 
-    bool success = true;
-
     /// STATE MAPPINGS
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
@@ -68,7 +66,7 @@ contract ERC20 is IERC20 {
         balanceOf[_to] += _value;
 
         emit Transfer(msg.sender, _to, _value);
-        return success;
+        return true;
     }
 
     function transferFrom(
@@ -90,7 +88,7 @@ contract ERC20 is IERC20 {
         balanceOf[_to] += _value;
 
         emit Transfer(_from, _to, _value);
-        return success;
+        return true;
     }
 
     function approve(
