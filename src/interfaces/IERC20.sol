@@ -29,7 +29,7 @@ interface IERC20 {
 
     function price() external view returns (uint256 _price);
 
-    function buy(uint256 _amount) external payable;
+    // function buy(uint256 _amount) external payable;
 
     function setPrice(uint256 _price) external;
 }
