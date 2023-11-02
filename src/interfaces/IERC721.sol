@@ -26,7 +26,7 @@ interface IERC721 {
 
     function approve(address _approved, uint256 _tokenId) external;
 
-    function safeMint(string memory _name) external;
+    function safeMint(string memory _name) external payable;
 
     function buy(uint256 _tokenId, string memory _newName) external;
 
