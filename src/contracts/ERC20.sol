@@ -4,7 +4,6 @@ pragma solidity 0.8.16;
 import "../interfaces/IERC20.sol";
 
 contract ERC20 is IERC20 {
-
     /// STATE VARIABLES
     string public name;
     string public symbol;
@@ -22,12 +21,20 @@ contract ERC20 is IERC20 {
     /// @notice Trigger when tokens are transferred
     /// @dev On new tokens creation, trigger with the `from` address set to zero address
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    
+
     /// @notice Trigger on any successful call to `approve` method
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
+    );
 
     /// @notice Trigger on any successful call to `burn` method
-    event Burn(address indexed _from, address indexed _commandedBy, uint256 _value);
+    event Burn(
+        address indexed _from,
+        address indexed _commandedBy,
+        uint256 _value
+    );
 
     // Modifiers
     modifier isInsuficientBalance(address _account, uint256 _value) {
@@ -50,8 +57,10 @@ contract ERC20 is IERC20 {
         symbol = _symbol;
     }
 
-    function transfer(address _to, uint256 _value) external isZeroAddress(_to) isValidValue(_value) returns (bool) {
-
+    function transfer(
+        address _to,
+        uint256 _value
+    ) external isZeroAddress(_to) isValidValue(_value) returns (bool) {
         require(msg.sender != _to, "Invalid recipient, same as remitter");
         require(balanceOf[msg.sender] >= _value, "Insufficient balance");
 
@@ -66,9 +75,17 @@ contract ERC20 is IERC20 {
         address _from,
         address _to,
         uint256 _value
-    ) external isZeroAddress(_from) isZeroAddress(_to) isValidValue(_value) returns (bool) {
-
-        require(msg.sender == _from || allowance[_from][msg.sender] >= _value, "Insufficent allowance");
+    )
+        external
+        isZeroAddress(_from)
+        isZeroAddress(_to)
+        isValidValue(_value)
+        returns (bool)
+    {
+        require(
+            msg.sender == _from || allowance[_from][msg.sender] >= _value,
+            "Insufficent allowance"
+        );
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
 
@@ -76,20 +93,25 @@ contract ERC20 is IERC20 {
         return success;
     }
 
-        function approve(address _spender, uint256 _value) external isZeroAddress(_spender) isValidValue(_value) {
-            require(allowance[msg.sender][_spender] == 0 || _value == 0, "Invalid allowance amount. Set to zero first");
-            allowance[msg.sender][_spender] = _value;
-            
-            emit Approval(msg.sender, _spender, _value);
-        }
+    function approve(
+        address _spender,
+        uint256 _value
+    ) external isZeroAddress(_spender) isValidValue(_value) {
+        require(
+            allowance[msg.sender][_spender] == 0 || _value == 0,
+            "Invalid allowance amount. Set to zero first"
+        );
+        allowance[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender, _spender, _value);
+    }
 
     // Commented because maybe it is not necessary here
     // function buy(uint256 _amount) external payable {
     //     //TODO
     // }
 
-    // function setPrice(uint256 _price) external {
-    //     // require(msg.sender == owner, "Not the owner");
-    //     // price = _price;
-    // }
+    function setPrice(uint256 _price) external {
+        price = _price;
+    }
 }
