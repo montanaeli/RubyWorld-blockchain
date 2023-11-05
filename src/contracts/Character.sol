@@ -2,6 +2,7 @@
 pragma solidity 0.8.16;
 
 import "src/interfaces/ICharacter.sol";
+import "src/interfaces/IOwnersContract.sol";
 
 // General Doubts of the implementation:
 // * For 'operator' mapping, when exactly shoud I add an operator?
@@ -25,24 +26,29 @@ contract Character is ICharacter {
 
     string public name;
     string public symbol;
+    string public tokenURI;
     uint256 public totalSupply;
     uint256 public mintPrice;
+    uint256 public defaultRequiredExpirience;
+    address public owner;
 
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
     mapping(uint256 => Metadata) public metadataOf;
     mapping(address => mapping(address => bool)) public operator;
-    mapping(uint256 => string) public tokenURI;
 
     constructor(
         string memory _name,
         string memory _symbol,
-        uint256 _mintPrice
+        string memory _tokenURI,
+        address _ownersContract
     ) {
         name = _name;
         symbol = _symbol;
-        mintPrice = _mintPrice;
+        tokenURI = _tokenURI;
+        defaultRequiredExpirience = 100;
+        owner = _ownersContract;
     }
 
     function safeTransfer(address _to, uint256 _tokenId) external {
@@ -99,27 +105,28 @@ contract Character is ICharacter {
 
     function safeMint(string memory _name) external {
         require(bytes(_name).length > 0, "Invalid name");
-        // Check the rest of the conditions
-
-        // Metadata memory newCharacterMetadata = Metadata({
-        //     name: _name,
-        //     attackPoints: 100,
-        //     armorPoints: 50,
-        //     weapon: new uint256[3],
-        //     sellPrice: 0,
-        //     requiredExperience: 0,
-        //     onSale: false
-        // });
-        // totalSupply++;
-        // balanceOf[msg.sender]++;
-        // ownerOf[totalSupply] = msg.sender;
-        // tokenURI[totalSupply] = _name;
+        require(msg.value >= mintPrice, "Not enough ETH");
+        uint256[3] memory defaultEmptyWeapons;
+        Metadata memory newCharacterMetadata = Metadata({
+            name: _name,
+            attackPoints: 100,
+            armorPoints: 50,
+            weapon: defaultEmptyWeapons,
+            sellPrice: mintPrice,
+            requiredExperience: defaultRequiredExpirience,
+            onSale: false
+        });
+        totalSupply++;
+        balanceOf[msg.sender]++;
+        ownerOf[totalSupply] = msg.sender;
+        // TODO: With each new minted character, the owner account will recieve 1000 RUBIE tokens
+        // TODO:When mint is complete, this function checks if `_to` is a smart contract (code size > 0), if so, it calls `onERC721Received` on `_to` and throws if the return value is not `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`, message: "Invalid contract".
     }
 
     function mintHero(
         uint256 _attackPoints,
         uint256 _armorPoints,
-        IWeapon[3] memory _weapon,
+        uint256[3] memory _weapon,
         uint256 _sellPrice,
         uint256 _requiredExperience
     ) external {
@@ -127,19 +134,19 @@ contract Character is ICharacter {
         require(_armorPoints > 50, "Invalid _armorPoints");
         require(_sellPrice > 0, "Invalid _sellPrice");
         require(_requiredExperience > 100, "Invalid _requiredExperience");
-        // Metadata memory newCharacterMetadata = Metadata({
-        //     name: "Hero name",
-        //     attackPoints: _attackPoints,
-        //     armorPoints: _armorPoints,
-        //     weapon: _weapon,
-        //     sellPrice: _sellPrice,
-        //     requiredExperience: _requiredExperience,
-        //     onSale: true
-        // });
-        // totalSupply++;
-        // balanceOf[msg.sender]++;
-        // ownerOf[totalSupply] = msg.sender;
-        // tokenURI[totalSupply] = "Hero name";
+        require(msg.sender == owner, "Not the owner");
+        Metadata memory newCharacterMetadata = Metadata({
+            name: "Hero name",
+            attackPoints: _attackPoints,
+            armorPoints: _armorPoints,
+            weapon: _weapon,
+            sellPrice: _sellPrice,
+            requiredExperience: _requiredExperience,
+            onSale: true
+        });
+        totalSupply++;
+        balanceOf[msg.sender]++;
+        ownerOf[totalSupply] = msg.sender;
     }
 
     function getSellinformation(
@@ -158,7 +165,7 @@ contract Character is ICharacter {
     }
 
     function buy(uint256 _tokenId, string memory _newName) external {
-        // TODO: Check if the sender pays the corresponding sellPrice in ETH
+        require(msg.value >= metadataOf[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadataOf[_tokenId].onSale, "Character not on sale");
         // TODO: Check if the sender has enough experience
@@ -169,6 +176,7 @@ contract Character is ICharacter {
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
+        require(msg.sender == ownerOf[_tokenId], "Not the owner");
         metadataOf[_tokenId].onSale = _onSale;
     }
 
@@ -177,10 +185,13 @@ contract Character is ICharacter {
     }
 
     function setMintingPrice(uint256 _mintPrice) external {
+        require(_mintPrice > 0, "Invalid _mintPrice");
+        require(msg.sender == owner, "Not the owner");
         mintPrice = _mintPrice;
     }
 
     function collectFee() external {
+        require(msg.sender == owner, "Not the owner");
         // To be implemented
     }
 

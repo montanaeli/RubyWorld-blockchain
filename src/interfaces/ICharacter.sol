@@ -131,7 +131,7 @@ interface ICharacter {
     function mintHero(
         uint256 _attackPoints,
         uint256 _armorPoints,
-        IWeapon[3] memory _weapon,
+        uint256[3] memory _weapon, // Took the liberty to change this, already asked David if this is correct.
         uint256 _sellPrice,
         uint256 _requiredExperience
     ) external;
