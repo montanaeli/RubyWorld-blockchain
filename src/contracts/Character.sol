@@ -35,7 +35,7 @@ contract Character is ICharacter {
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
-    mapping(uint256 => Metadata) public metadataOf;
+    mapping(uint256 => Metadata) public metadata;
     mapping(address => mapping(address => bool)) public operator;
 
     constructor(
@@ -95,6 +95,12 @@ contract Character is ICharacter {
         allowance[_tokenId] = _approved;
     }
 
+    function metadataOf(
+        uint256 _tokenId
+    ) external view returns (Metadata memory _metadata) {
+        return metadata[_tokenId];
+    }
+
     function weapon(
         uint256 _weaponIndex
     ) external view returns (IWeapon _weapon) {
@@ -103,7 +109,7 @@ contract Character is ICharacter {
         // Or should we know the tokenId of the character from the weaponIndex?
     }
 
-    function safeMint(string memory _name) external {
+    function safeMint(string memory _name) external payable {
         require(bytes(_name).length > 0, "Invalid name");
         require(msg.value >= mintPrice, "Not enough ETH");
         uint256[3] memory defaultEmptyWeapons;
@@ -119,6 +125,7 @@ contract Character is ICharacter {
         totalSupply++;
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
+        metadata[totalSupply] = newCharacterMetadata;
         // TODO: With each new minted character, the owner account will recieve 1000 RUBIE tokens
         // TODO:When mint is complete, this function checks if `_to` is a smart contract (code size > 0), if so, it calls `onERC721Received` on `_to` and throws if the return value is not `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`, message: "Invalid contract".
     }
@@ -135,6 +142,7 @@ contract Character is ICharacter {
         require(_sellPrice > 0, "Invalid _sellPrice");
         require(_requiredExperience > 100, "Invalid _requiredExperience");
         require(msg.sender == owner, "Not the owner");
+        // Check if the msg.value has founds?
         Metadata memory newCharacterMetadata = Metadata({
             name: "Hero name",
             attackPoints: _attackPoints,
@@ -147,6 +155,7 @@ contract Character is ICharacter {
         totalSupply++;
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
+        metadata[totalSupply] = newCharacterMetadata;
     }
 
     function getSellinformation(
@@ -156,7 +165,7 @@ contract Character is ICharacter {
         view
         returns (bool _onSale, uint256 _price, uint256 _requiredExperience)
     {
-        Metadata memory characterMetadata = metadataOf[_tokenId];
+        Metadata memory characterMetadata = metadata[_tokenId];
         return (
             characterMetadata.onSale,
             characterMetadata.sellPrice,
@@ -164,20 +173,20 @@ contract Character is ICharacter {
         );
     }
 
-    function buy(uint256 _tokenId, string memory _newName) external {
-        require(msg.value >= metadataOf[_tokenId].sellPrice, "Not enough ETH");
+    function buy(uint256 _tokenId, string memory _newName) external payable {
+        require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(metadataOf[_tokenId].onSale, "Character not on sale");
+        require(metadata[_tokenId].onSale, "Character not on sale");
         // TODO: Check if the sender has enough experience
         // TODO: Transfer de weapons
         ownerOf[_tokenId] = msg.sender;
-        metadataOf[_tokenId].name = _newName;
+        metadata[_tokenId].name = _newName;
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not the owner");
-        metadataOf[_tokenId].onSale = _onSale;
+        metadata[_tokenId].onSale = _onSale;
     }
 
     function currentTokenID() external view returns (uint256 _currentTokenID) {
