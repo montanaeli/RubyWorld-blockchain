@@ -3,10 +3,11 @@ pragma solidity 0.8.16;
 
 import "../interfaces/IERC20.sol";
 
-contract ERC20 is IERC20 {
+abstract contract ERC20 is IERC20 {
     /// STATE VARIABLES
     string public name;
     string public symbol;
+    address public ownersContract;
     uint256 public totalSupply;
     uint256 public decimals;
     uint256 public price;
@@ -35,30 +36,31 @@ contract ERC20 is IERC20 {
     );
 
     // Modifiers
-    modifier isInsuficientBalance(address _account, uint256 _value) {
-        require(balanceOf[_account] >= _value, "Insufficient balance");
-        _;
-    }
-
-    modifier isZeroAddress(address _address) {
-        require(_address != address(0), "Invalid address");
+    //TODO: Check if this has to be re defined in each call because the throw message may change
+    modifier isValidAddress(address _address) {
+        require(_address != address(0), "Invalid _address");
         _;
     }
 
     modifier isValidValue(uint256 _value) {
-        require(_value > 0, "Invalid_value");
+        require(_value > 0, "Invalid _value");
         _;
     }
 
-    constructor(string memory _name, string memory _symbol) {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _ownersContract
+    ) {
         name = _name;
         symbol = _symbol;
+        ownersContract = _ownersContract;
     }
 
     function transfer(
         address _to,
         uint256 _value
-    ) external isZeroAddress(_to) isValidValue(_value) returns (bool) {
+    ) external isValidAddress(_to) isValidValue(_value) returns (bool) {
         require(msg.sender != _to, "Invalid recipient, same as remitter");
         require(balanceOf[msg.sender] >= _value, "Insufficient balance");
 
@@ -75,8 +77,8 @@ contract ERC20 is IERC20 {
         uint256 _value
     )
         external
-        isZeroAddress(_from)
-        isZeroAddress(_to)
+        isValidAddress(_from)
+        isValidAddress(_to)
         isValidValue(_value)
         returns (bool)
     {
@@ -94,7 +96,7 @@ contract ERC20 is IERC20 {
     function approve(
         address _spender,
         uint256 _value
-    ) external isZeroAddress(_spender) isValidValue(_value) {
+    ) external isValidAddress(_spender) isValidValue(_value) {
         require(
             allowance[msg.sender][_spender] == 0 || _value == 0,
             "Invalid allowance amount. Set to zero first"
@@ -104,12 +106,8 @@ contract ERC20 is IERC20 {
         emit Approval(msg.sender, _spender, _value);
     }
 
-    // Commented because maybe it is not necessary here
-    // function buy(uint256 _amount) external payable {
-    //     //TODO
-    // }
-
     function setPrice(uint256 _price) external {
+        require(msg.sender == ownersContract, "Not the owner");
         price = _price;
     }
 }
