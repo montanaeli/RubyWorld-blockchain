@@ -5,7 +5,6 @@ import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 
 // General Doubts of the implementation:
-// * For 'operator' mapping, when exactly shoud I add an operator?
 // * Para las Weapons, hay una array de tres integers, como lo vamos a mappear?
 // * Para el mintHero, te pasan las intancias de Weapon ya? Como sabemos que int es para asc
 
@@ -36,7 +35,6 @@ contract Character is ICharacter {
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
     mapping(uint256 => Metadata) public metadata;
-    mapping(address => mapping(address => bool)) public operator;
 
     constructor(
         string memory _name,
@@ -72,9 +70,7 @@ contract Character is ICharacter {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(_to != address(0), "Invalid address");
         require(
-            _from == msg.sender ||
-                allowance[_tokenId] == msg.sender ||
-                operator[ownerOf[_tokenId]][msg.sender],
+            _from == msg.sender || allowance[_tokenId] == msg.sender,
             "Not the owner"
         );
         ownerOf[_tokenId] = _to;
@@ -88,9 +84,8 @@ contract Character is ICharacter {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         address _tokenOwner = ownerOf[_tokenId];
         require(
-            msg.sender == _tokenOwner ||
-                allowance[_tokenId] == msg.sender ||
-                operator[_tokenOwner][msg.sender]
+            msg.sender == _tokenOwner || allowance[_tokenId] == msg.sender,
+            "Not the owner"
         );
         allowance[_tokenId] = _approved;
     }
