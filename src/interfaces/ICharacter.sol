@@ -114,7 +114,7 @@ interface ICharacter {
     /// if so, it calls `onERC721Received` on `_to` and throws if the return value is not
     /// `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`, message: "Invalid contract".
     /// @param _name The name of the new Character NFT
-    function safeMint(string memory _name) external;
+    function safeMint(string memory _name) external payable;
 
     /// @notice Mint a new hero, a character NFT with special attributes
     /// @dev Revert if _attackPoints is less than 100 with "Invalid _attackPoints"
@@ -131,7 +131,7 @@ interface ICharacter {
     function mintHero(
         uint256 _attackPoints,
         uint256 _armorPoints,
-        IWeapon[3] memory _weapon,
+        uint256[3] memory _weapon, // Took the liberty to change this, already asked David if this is correct.
         uint256 _sellPrice,
         uint256 _requiredExperience
     ) external;
@@ -158,7 +158,7 @@ interface ICharacter {
     /// @dev Set the new name of the character
     /// @param _tokenId The tokenId of the character to buy
     /// @param _newName The new name of the character
-    function buy(uint256 _tokenId, string memory _newName) external;
+    function buy(uint256 _tokenId, string memory _newName) external payable;
 
     /// @notice Set a character's onSale property to true to allow the sell of the character. To false otherwise.
     /// @dev Revert if the tokenId does not exist with "Invalid tokenId"
