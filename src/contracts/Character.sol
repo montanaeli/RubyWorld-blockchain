@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "src/interfaces/ERC721.sol";
+import "./ERC721.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 
 /// @dev This contract must implement the ICharacter interface
-contract Character is ERC721, ICharacter {
+contract Character is ICharacter, ERC721 {
     uint256 public defaultRequiredExpirience;
 
     mapping(uint256 => Metadata) public metadata;
@@ -96,6 +96,10 @@ contract Character is ERC721, ICharacter {
             characterMetadata.sellPrice,
             characterMetadata.requiredExperience
         );
+    }
+
+    function setMintingPrice(uint256 _mintPrice) external {
+        mintPrice = _mintPrice;
     }
 
     function buy(uint256 _tokenId, string memory _newName) external payable {

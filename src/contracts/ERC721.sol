@@ -98,11 +98,6 @@ contract ERC721 is IERC721 {
         return totalSupply;
     }
 
-    function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == owner, "Not the owner");
-        mintPrice = _mintPrice;
-    }
-
     function _isSmartContract(address _address) private view returns (bool) {
         return (_address.code.length > 0);
     }

@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "src/interfaces/ERC721.sol";
+import "./ERC721.sol";
 import "src/interfaces/IWeapon.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
@@ -103,6 +103,11 @@ contract Weapon is ERC721, IWeapon {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not authorized");
         metadata[_tokenId].onSale = _onSale;
+    }
+
+    function setMintPrice(uint256 _mintPrice) external {
+        require(msg.sender == owner, "Not the owner");
+        mintPrice = _mintPrice;
     }
 
     function collectFee() external {
