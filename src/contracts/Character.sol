@@ -1,39 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import "src/interfaces/ERC721.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 
-// General Doubts of the implementation:
-// * Para las Weapons, hay una array de tres integers, como lo vamos a mappear?
-// * Para el mintHero, te pasan las intancias de Weapon ya? Como sabemos que int es para asc
-
 /// @dev This contract must implement the ICharacter interface
-contract Character is ICharacter {
-    // Events
-    event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _value
-    );
-
-    event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
-    );
-
-    string public name;
-    string public symbol;
-    string public tokenURI;
-    uint256 public totalSupply;
-    uint256 public mintPrice;
+contract Character is ERC721, ICharacter {
     uint256 public defaultRequiredExpirience;
-    address public owner;
 
-    mapping(address => uint256) public balanceOf;
-    mapping(uint256 => address) public ownerOf;
-    mapping(uint256 => address) public allowance;
     mapping(uint256 => Metadata) public metadata;
 
     constructor(
@@ -41,53 +16,8 @@ contract Character is ICharacter {
         string memory _symbol,
         string memory _tokenURI,
         address _ownersContract
-    ) {
-        name = _name;
-        symbol = _symbol;
-        tokenURI = _tokenURI;
+    ) ERC721(_name, _symbol, _tokenURI, _ownersContract) {
         defaultRequiredExpirience = 100;
-        owner = _ownersContract;
-    }
-
-    function safeTransfer(address _to, uint256 _tokenId) external {
-        // TODO: The part of the safe transfer
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(_to != address(0), "Invalid address");
-        require(ownerOf[_tokenId] == msg.sender, "Not the owner");
-        ownerOf[_tokenId] = _to;
-        balanceOf[msg.sender]--;
-        balanceOf[_to]++;
-        allowance[_tokenId] = address(0);
-        emit Transfer(msg.sender, _to, _tokenId);
-    }
-
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external {
-        // TODO: Remains to implement the penultimum DEV requirement
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(_to != address(0), "Invalid address");
-        require(
-            _from == msg.sender || allowance[_tokenId] == msg.sender,
-            "Not the owner"
-        );
-        ownerOf[_tokenId] = _to;
-        balanceOf[_from]--;
-        balanceOf[_to]++;
-        allowance[_tokenId] = address(0);
-        emit Transfer(_from, _to, _tokenId);
-    }
-
-    function approve(address _approved, uint256 _tokenId) external {
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        address _tokenOwner = ownerOf[_tokenId];
-        require(
-            msg.sender == _tokenOwner || allowance[_tokenId] == msg.sender,
-            "Not the owner"
-        );
-        allowance[_tokenId] = _approved;
     }
 
     function metadataOf(
@@ -184,24 +114,8 @@ contract Character is ICharacter {
         metadata[_tokenId].onSale = _onSale;
     }
 
-    function currentTokenID() external view returns (uint256 _currentTokenID) {
-        return totalSupply;
-    }
-
-    function setMintingPrice(uint256 _mintPrice) external {
-        require(_mintPrice > 0, "Invalid _mintPrice");
-        require(msg.sender == owner, "Not the owner");
-        mintPrice = _mintPrice;
-    }
-
     function collectFee() external {
         require(msg.sender == owner, "Not the owner");
         // To be implemented
-    }
-
-    // Private Functions
-    function _isSmartContract(address _address) private view returns (bool) {
-        // Is this correct?
-        return (_address.code.length > 0);
     }
 }

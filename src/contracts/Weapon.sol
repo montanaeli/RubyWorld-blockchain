@@ -1,36 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import "src/interfaces/ERC721.sol";
 import "src/interfaces/IWeapon.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 
 /// @dev This contract must implement the IWeapon interface
-contract Weapon is IWeapon {
-    // Events
-    event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _value
-    );
-
-    event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
-    );
-
-    string public name;
-    string public symbol;
-    string public tokenURI;
-    uint256 public totalSupply;
-    uint256 public mintPrice;
-    address public owner;
+contract Weapon is ERC721, IWeapon {
     address public characterContract;
-
-    mapping(address => uint256) public balanceOf;
-    mapping(uint256 => address) public ownerOf;
-    mapping(uint256 => address) public allowance;
     mapping(uint256 => Metadata) public metadata;
 
     constructor(
@@ -39,53 +17,8 @@ contract Weapon is IWeapon {
         string memory _tokenURI,
         address _ownerContract,
         address _characterContract
-    ) {
-        name = _name;
-        symbol = _symbol;
-        tokenURI = _tokenURI;
-        owner = _ownerContract;
+    ) ERC721(_name, _symbol, _tokenURI, _ownerContract) {
         characterContract = _characterContract;
-    }
-
-    function safeTransfer(address _to, uint256 _tokenId) external {
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(_to != address(0), "Invalid address");
-        require(ownerOf[_tokenId] == msg.sender, "Not the owner");
-        // TODO: The part of the safe transfer
-        ownerOf[_tokenId] = _to;
-        balanceOf[msg.sender]--;
-        balanceOf[_to]++;
-        allowance[_tokenId] = address(0);
-        emit Transfer(msg.sender, _to, _tokenId);
-    }
-
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external {
-        // TODO: Remains to implement the penultimum DEV requirement
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(_to != address(0), "Invalid address");
-        require(
-            _from == msg.sender || allowance[_tokenId] == msg.sender,
-            "Not the owner"
-        );
-        ownerOf[_tokenId] = _to;
-        balanceOf[_from]--;
-        balanceOf[_to]++;
-        allowance[_tokenId] = address(0);
-        emit Transfer(_from, _to, _tokenId);
-    }
-
-    function approve(address _approved, uint256 _tokenId) external {
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        address _tokenOwner = ownerOf[_tokenId];
-        require(
-            msg.sender == _tokenOwner || allowance[_tokenId] == msg.sender,
-            "Not the owner"
-        );
-        allowance[_tokenId] = _approved;
     }
 
     function metadataOf(
@@ -170,15 +103,6 @@ contract Weapon is IWeapon {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not authorized");
         metadata[_tokenId].onSale = _onSale;
-    }
-
-    function currentTokenID() external view returns (uint256 _currentTokenID) {
-        return totalSupply;
-    }
-
-    function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == owner, "Not the owner");
-        mintPrice = _mintPrice;
     }
 
     function collectFee() external {

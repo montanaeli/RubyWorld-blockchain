@@ -26,17 +26,9 @@ interface IERC721 {
 
     function approve(address _approved, uint256 _tokenId) external;
 
-    function safeMint(string memory _name) external payable;
-
-    function buy(uint256 _tokenId, string memory _newName) external;
-
-    function setOnSale(uint256 _tokenId, bool _onSale) external;
-
     function currentTokenID() external view returns (uint256 _currentTokenID);
 
     function mintPrice() external view returns (uint256 _mintPrice);
 
     function setMintPrice(uint256 _mintPrice) external;
-
-    function collectFee() external;
 }
