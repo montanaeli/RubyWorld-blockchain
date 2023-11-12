@@ -22,7 +22,7 @@ contract ERC721 is IERC721 {
     string public tokenURI;
     uint256 public totalSupply;
     uint256 public mintPrice;
-    address public owner;
+    address public ownersContract;
 
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
@@ -47,7 +47,7 @@ contract ERC721 is IERC721 {
         name = _name;
         symbol = _symbol;
         tokenURI = _tokenURI;
-        owner = _ownerContract;
+        ownersContract = _ownerContract;
     }
 
     function safeTransfer(
@@ -96,9 +96,5 @@ contract ERC721 is IERC721 {
 
     function currentTokenID() external view returns (uint256 _currentTokenID) {
         return totalSupply;
-    }
-
-    function _isSmartContract(address _address) private view returns (bool) {
-        return (_address.code.length > 0);
     }
 }

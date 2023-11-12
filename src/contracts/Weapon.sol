@@ -5,11 +5,24 @@ import "./ERC721.sol";
 import "src/interfaces/IWeapon.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
+import "src/interfaces/IER721TokenReceiver.sol";
+import "src/interfaces/IRubie.sol";
+import "src/interfaces/IExperience.sol";
+import "src/contracts/OwnersContract.sol";
+import "src/contracts/Rubie.sol";
 
 /// @dev This contract must implement the IWeapon interface
 contract Weapon is ERC721, IWeapon {
     address public characterContract;
     mapping(uint256 => Metadata) public metadata;
+
+    modifier isContractOwner(address _address) {
+        require(
+            OwnersContract(ownersContract).owners(_address),
+            "Not the owner"
+        );
+        _;
+    }
 
     constructor(
         string memory _name,
@@ -29,12 +42,21 @@ contract Weapon is ERC721, IWeapon {
 
     function safeMint(string memory _name) external {
         require(bytes(_name).length > 0, "Invalid name");
-        // TODO: Check if the user has enough RUBIE tokens to mint a new character
-        // TODO: CHeck if the user has enough allowance to mint this
+        address rubiesAddressContract = OwnersContract(ownersContract)
+            .contracts("RUBIE");
+        require(
+            Rubie(rubiesAddressContract).balanceOf(msg.sender) >= mintPrice,
+            "Insufficient balance"
+        );
+        require(
+            Rubie(rubiesAddressContract).allowance(msg.sender, address(this)) >=
+                mintPrice,
+            "Insufficient allowance"
+        );
         Metadata memory newWeapon = Metadata({
-            characterID: 0, // TODO: This value must be the id of the character that is minting the new character
+            characterID: 0,
             attackPoints: 30,
-            armorPonits: 5,
+            armorPoints: 5,
             sellPrice: mintPrice,
             requiredExperience: 10,
             name: _name,
@@ -44,7 +66,7 @@ contract Weapon is ERC721, IWeapon {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newWeapon;
-        // TODO:When mint is complete, this function checks if `_to` is a smart contract (code size > 0), if so, it calls `onERC721Received` on `_to` and throws if the return value is not `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`, message: "Invalid contract".
+        isERC721_TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintLegendaryWeapon(
@@ -52,15 +74,15 @@ contract Weapon is ERC721, IWeapon {
         uint256 _armorPoints,
         uint256 _sellPrice,
         uint256 _requiredExperience
-    ) external {
+    ) external isContractOwner(msg.sender) {
         require(_attackPoints >= 150, "Invalid _attackPoints");
         require(_armorPoints >= 100, "Invalid _armorPoints");
         require(_sellPrice >= 0, "Invalid _sellPrice");
         require(_requiredExperience >= 10, "Invalid _requiredExperience");
         Metadata memory newLegendaryWeapon = Metadata({
-            characterID: 0, // TODO: This value must be the id of the character that is minting the new character
+            characterID: 0,
             attackPoints: 30,
-            armorPonits: 5,
+            armorPoints: 5,
             sellPrice: mintPrice,
             requiredExperience: 10,
             name: "Lengendary weapon name",
@@ -87,16 +109,47 @@ contract Weapon is ERC721, IWeapon {
         );
     }
 
-    function buy(uint256 _tokenId, string memory _newName) external {
-        // TODO: Check if the sender has paid enough rubies
+    function buy(uint256 _tokenId, string memory _newName) external payable {
+        require(msg.value >= metadata[_tokenId].sellPrice, "Not enough Rubies");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "weapon not on sale");
-        // TODO: Check if the sender has enough experience
-        // TODO: Check if the sender has enough rubies to cover the price of the token
-        // TODO: Check if the user has enough balance to buy the token
-        // TODO: Check if the weapon is equiped to a character, and if so, unequip it and then transferred to the new owner.
+        address experienceContractAddress = OwnersContract(ownersContract)
+            .contracts("EXPERIENCE");
+        require(
+            IExperience(experienceContractAddress).balanceOf(msg.sender) >=
+                metadata[_tokenId].requiredExperience,
+            "Insufficient experience"
+        );
+        address rubieContractAddress = OwnersContract(ownersContract).contracts(
+            "RUBIE"
+        );
+        require(
+            IRubie(rubieContractAddress).balanceOf(msg.sender) >=
+                metadata[_tokenId].sellPrice,
+            "Insufficient Rubies"
+        );
+        require(
+            Rubie(rubieContractAddress).allowance(msg.sender, address(this)) >=
+                mintPrice,
+            "Insufficient allowance"
+        );
+        if (metadata[_tokenId].characterID != 0) {
+            ICharacter(characterContract)
+                .metadataOf(metadata[_tokenId].characterID)
+                .attackPoints -= metadata[_tokenId].attackPoints;
+            ICharacter(characterContract)
+                .metadataOf(metadata[_tokenId].characterID)
+                .armorPoints -= metadata[_tokenId].armorPoints;
+            ICharacter(characterContract)
+                .metadataOf(metadata[_tokenId].characterID)
+                .sellPrice -= metadata[_tokenId].sellPrice;
+            ICharacter(characterContract)
+                .metadataOf(metadata[_tokenId].characterID)
+                .requiredExperience -= metadata[_tokenId].requiredExperience;
+        }
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
+        IWeapon(this).safeTransfer(msg.sender, _tokenId);
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {
@@ -106,32 +159,117 @@ contract Weapon is ERC721, IWeapon {
     }
 
     function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == owner, "Not the owner");
+        require(msg.sender == ownersContract, "Not the owner");
         mintPrice = _mintPrice;
     }
 
     function collectFee() external {
-        // To be implemented
+        require(msg.sender == ownersContract, "Not the owner");
+        require(balanceOf[ownersContract] > 0, "zero balance");
+        payable(msg.sender).transfer(balanceOf[ownersContract]);
     }
 
     function addWeaponToCharacter(
         uint256 _weaponId,
         uint256 _characterId
     ) external {
-        /// @dev Check if the weapon exists
-        /// @dev Check if the character exists
-        /// @dev Check if the weapon is already equiped
-        /// @dev Check if the character already has 3 weapon equiped
-        /// @dev Increase the attackPoints of the character in weapon attackPoints
-        /// @dev Increase the armorPoints of the character in weapon armorPoints
-        /// @dev Increase the character sellPrice in weapon sellPrice
-        /// @dev Increase the character requiredExperience in weapon requiredExperience
+        require(_weaponId < totalSupply && _weaponId > 0, "Invalid _weaponId");
+        require(
+            _characterId < ICharacter(characterContract).totalSupply() &&
+                _characterId > 0,
+            "Invalid _characterId"
+        );
+        require(
+            metadata[_weaponId].characterID != _characterId,
+            "Weapon already equipped"
+        );
+        require(
+            ICharacter(characterContract).metadataOf(_characterId).weapon[0] ==
+                0 ||
+                ICharacter(characterContract).metadataOf(_characterId).weapon[
+                    1
+                ] ==
+                0 ||
+                ICharacter(characterContract).metadataOf(_characterId).weapon[
+                    2
+                ] ==
+                0,
+            "Weapon slots are full"
+        );
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .attackPoints += metadata[_weaponId].attackPoints;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .armorPoints += metadata[_weaponId].armorPoints;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .sellPrice += metadata[_weaponId].sellPrice;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .requiredExperience += metadata[_weaponId].requiredExperience;
+        metadata[_weaponId].characterID = _characterId;
     }
 
     function removeWeaponFromCharacter(
         uint256 _weaponId,
         uint256 _characterId
     ) external {
-        // To be implemented
+        require(_weaponId < totalSupply && _weaponId > 0, "Invalid _weaponId");
+        require(
+            _characterId < ICharacter(characterContract).totalSupply() &&
+                _characterId > 0,
+            "Invalid _characterId"
+        );
+        require(
+            metadata[_weaponId].characterID == _characterId,
+            "Weapon not equipped"
+        );
+        require(
+            ICharacter(characterContract).metadataOf(_characterId).weapon[0] ==
+                0 ||
+                ICharacter(characterContract).metadataOf(_characterId).weapon[
+                    1
+                ] ==
+                0 ||
+                ICharacter(characterContract).metadataOf(_characterId).weapon[
+                    2
+                ] ==
+                0,
+            "Weapon slots are full"
+        );
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .attackPoints -= metadata[_weaponId].attackPoints;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .armorPoints -= metadata[_weaponId].armorPoints;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .sellPrice -= metadata[_weaponId].sellPrice;
+        ICharacter(characterContract)
+            .metadataOf(_characterId)
+            .requiredExperience -= metadata[_weaponId].requiredExperience;
+        metadata[_weaponId].characterID = 0;
+    }
+
+    /// FUNCIONES PRIVADAS
+    function _isSmartContract(address _address) private view returns (bool) {
+        return (_address.code.length > 0);
+    }
+
+    function isERC721_TokenReceiver(
+        address _address,
+        uint256 _tokenId
+    ) private {
+        if (_isSmartContract(_address)) {
+            bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
+            bytes memory _data;
+            bytes4 ERC721Received_result = IERC721TokenReceiver(_address)
+                .onERC721Received(address(this), msg.sender, _tokenId, _data);
+            if (ERC721Received_result != ERC721_TokenReceiver_Hash) {
+                revert("No ERC721Receiver");
+            }
+        }
     }
 }

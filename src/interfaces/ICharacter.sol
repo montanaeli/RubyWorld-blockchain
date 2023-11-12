@@ -38,7 +38,7 @@ interface ICharacter is IERC721 {
     /// @dev Returns the equipped weapon of the character in the indicated index
     function weapon(
         uint256 _weaponIndex
-    ) external view returns (IWeapon _weapon);
+    ) external view returns (uint256 _weapon);
 
     /// @notice Mint a new Character NFT with the indicated name
     /// @dev Revert if the name is empty with "Invalid _name"

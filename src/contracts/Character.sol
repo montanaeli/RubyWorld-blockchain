@@ -4,6 +4,11 @@ pragma solidity 0.8.16;
 import "./ERC721.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
+import "src/interfaces/IRubie.sol";
+import "src/interfaces/IExperience.sol";
+import "src/interfaces/IER721TokenReceiver.sol";
+import "src/contracts/OwnersContract.sol";
+import "src/contracts/Rubie.sol";
 
 /// @dev This contract must implement the ICharacter interface
 contract Character is ICharacter, ERC721 {
@@ -28,10 +33,8 @@ contract Character is ICharacter, ERC721 {
 
     function weapon(
         uint256 _weaponIndex
-    ) external view returns (IWeapon _weapon) {
-        // To be Implemented
-        // Don't we need the tokenId of the character here?
-        // Or should we know the tokenId of the character from the weaponIndex?
+    ) external view returns (uint256 _weapon) {
+        return metadata[_weaponIndex].weapon[_weaponIndex];
     }
 
     function safeMint(string memory _name) external payable {
@@ -51,8 +54,12 @@ contract Character is ICharacter, ERC721 {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newCharacterMetadata;
-        // TODO: With each new minted character, the owner account will recieve 1000 RUBIE tokens
-        // TODO:When mint is complete, this function checks if `_to` is a smart contract (code size > 0), if so, it calls `onERC721Received` on `_to` and throws if the return value is not `bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))`, message: "Invalid contract".
+        address rubieContractAddress = OwnersContract(ownersContract).contracts(
+            "RUBIE"
+        );
+        balanceOf[ownersContract] += msg.value;
+        Rubie(rubieContractAddress).transfer(msg.sender, 1000);
+        isERC721_TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintHero(
@@ -66,8 +73,10 @@ contract Character is ICharacter, ERC721 {
         require(_armorPoints > 50, "Invalid _armorPoints");
         require(_sellPrice > 0, "Invalid _sellPrice");
         require(_requiredExperience > 100, "Invalid _requiredExperience");
-        require(msg.sender == owner, "Not the owner");
-        // Check if the msg.value has founds?
+        require(
+            OwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
         Metadata memory newCharacterMetadata = Metadata({
             name: "Hero name",
             attackPoints: _attackPoints,
@@ -106,8 +115,24 @@ contract Character is ICharacter, ERC721 {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "Character not on sale");
-        // TODO: Check if the sender has enough experience
-        // TODO: Transfer de weapons
+        address experienceContractAddress = OwnersContract(ownersContract)
+            .contracts("Experience");
+        require(
+            IExperience(experienceContractAddress).balanceOf(msg.sender) >=
+                metadata[_tokenId].requiredExperience,
+            "Insufficient experience"
+        );
+        /// Transfer the weapons
+        for (uint256 i = 0; i < metadata[_tokenId].weapon.length; i++) {
+            if (metadata[_tokenId].weapon[i] != 0) {
+                IExperience(experienceContractAddress).transferFrom(
+                    msg.sender,
+                    ownerOf[_tokenId],
+                    metadata[_tokenId].weapon[i]
+                );
+            }
+        }
+        balanceOf[ownersContract] += msg.value;
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
     }
@@ -119,7 +144,28 @@ contract Character is ICharacter, ERC721 {
     }
 
     function collectFee() external {
-        require(msg.sender == owner, "Not the owner");
-        // To be implemented
+        require(msg.sender == ownersContract, "Not the owner");
+        require(balanceOf[ownersContract] > 0, "zero balance");
+        payable(msg.sender).transfer(balanceOf[ownersContract]);
+    }
+
+    /// FUNCIONES PRIVADAS
+    function _isSmartContract(address _address) private view returns (bool) {
+        return (_address.code.length > 0);
+    }
+
+    function isERC721_TokenReceiver(
+        address _address,
+        uint256 _tokenId
+    ) private {
+        if (_isSmartContract(_address)) {
+            bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
+            bytes memory _data;
+            bytes4 ERC721Received_result = IERC721TokenReceiver(_address)
+                .onERC721Received(address(this), msg.sender, _tokenId, _data);
+            if (ERC721Received_result != ERC721_TokenReceiver_Hash) {
+                revert("No ERC721Receiver");
+            }
+        }
     }
 }

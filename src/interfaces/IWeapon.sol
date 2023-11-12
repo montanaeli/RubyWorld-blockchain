@@ -22,7 +22,7 @@ interface IWeapon is IERC721 {
     struct Metadata {
         uint256 characterID;
         uint256 attackPoints;
-        uint256 armorPonits;
+        uint256 armorPoints;
         uint256 sellPrice;
         uint256 requiredExperience;
         string name;
@@ -94,7 +94,7 @@ interface IWeapon is IERC721 {
     /// @dev Set the name of the weapon to _newName
     /// @param _tokenId The tokenId of the weapon to buy
     /// @param _newName The new name of the weapon
-    function buy(uint256 _tokenId, string memory _newName) external;
+    function buy(uint256 _tokenId, string memory _newName) external payable;
 
     /// @notice Set a weapon's onSale property to true to allow the sell of the weapon. To false otherwise.
     /// @dev Throw if the tokenId does not exist with "Invalid tokenId"
