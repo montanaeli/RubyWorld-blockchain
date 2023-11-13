@@ -43,7 +43,7 @@ contract Weapon is ERC721, IWeapon {
     function safeMint(string memory _name) external {
         require(bytes(_name).length > 0, "Invalid name");
         address rubiesAddressContract = OwnersContract(ownersContract)
-            .contracts("RUBIE");
+            .addressOf("Rubie");
         require(
             Rubie(rubiesAddressContract).balanceOf(msg.sender) >= mintPrice,
             "Insufficient balance"
@@ -114,14 +114,14 @@ contract Weapon is ERC721, IWeapon {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "weapon not on sale");
         address experienceContractAddress = OwnersContract(ownersContract)
-            .contracts("EXPERIENCE");
+            .addressOf("Experience");
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
-        address rubieContractAddress = OwnersContract(ownersContract).contracts(
-            "RUBIE"
+        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
+            "Rubie"
         );
         require(
             IRubie(rubieContractAddress).balanceOf(msg.sender) >=
@@ -149,7 +149,7 @@ contract Weapon is ERC721, IWeapon {
         }
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
-        IWeapon(this).safeTransfer(msg.sender, _tokenId);
+        this.safeTransfer(msg.sender, _tokenId);
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {

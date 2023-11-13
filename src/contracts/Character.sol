@@ -54,8 +54,8 @@ contract Character is ICharacter, ERC721 {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newCharacterMetadata;
-        address rubieContractAddress = OwnersContract(ownersContract).contracts(
-            "RUBIE"
+        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
+            "Rubie"
         );
         balanceOf[ownersContract] += msg.value;
         Rubie(rubieContractAddress).transfer(msg.sender, 1000);
@@ -116,7 +116,7 @@ contract Character is ICharacter, ERC721 {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "Character not on sale");
         address experienceContractAddress = OwnersContract(ownersContract)
-            .contracts("Experience");
+            .addressOf("Experience");
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
