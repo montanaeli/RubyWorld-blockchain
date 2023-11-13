@@ -38,12 +38,12 @@ abstract contract ERC20 is IERC20 {
     // Modifiers
     //TODO: Check if this has to be re defined in each call because the throw message may change
     modifier isValidAddress(address _address) {
-        require(_address != address(0), "Invalid _address");
+        require(_address != address(0), "Invalid address");
         _;
     }
 
     modifier isValidValue(uint256 _value) {
-        require(_value > 0, "Invalid _value");
+        require(_value > 0, "Invalid value");
         _;
     }
 
