@@ -2,8 +2,10 @@
 pragma solidity 0.8.16;
 
 import "../interfaces/IERC721.sol";
+import "../interfaces/IERC721TokenReceiver.sol";
+import "./ERC721TokenReceiver.sol";
 
-contract ERC721 is IERC721 {
+contract ERC721 is IERC721, ERC721TokenReceiver {
     // Events
     event Approval(
         address indexed _owner,
@@ -63,6 +65,7 @@ contract ERC721 is IERC721 {
         allowance[_tokenId] = address(0);
         removeTokenFromAddress(msg.sender, _tokenId);
         addTokenToAddress(_to, _tokenId);
+        //TODO: missing the part of the onERC721Received
         emit Transfer(msg.sender, _to, _tokenId);
     }
 
@@ -84,6 +87,7 @@ contract ERC721 is IERC721 {
         allowance[_tokenId] = address(0);
         removeTokenFromAddress(_from, _tokenId);
         addTokenToAddress(_to, _tokenId);
+        //TODO: missing the part of the onERC721Received
         emit Transfer(_from, _to, _tokenId);
     }
 

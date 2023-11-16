@@ -6,7 +6,6 @@ import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "src/interfaces/IRubie.sol";
 import "src/interfaces/IExperience.sol";
-import "src/interfaces/IER721TokenReceiver.sol";
 import "src/contracts/OwnersContract.sol";
 import "src/contracts/Rubie.sol";
 
@@ -76,7 +75,7 @@ contract Character is ICharacter, ERC721 {
         );
         balanceOf[ownersContract] += msg.value;
         Rubie(rubieContractAddress).transfer(msg.sender, 1000);
-        isERC721_TokenReceiver(msg.sender, totalSupply);
+        this.onERC721Received(msg.sender, msg.sender, totalSupply, "");
     }
 
     function mintHero(
@@ -154,25 +153,5 @@ contract Character is ICharacter, ERC721 {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not the owner");
         metadata[_tokenId].onSale = _onSale;
-    }
-
-    /// FUNCIONES PRIVADAS
-    function _isSmartContract(address _address) private view returns (bool) {
-        return (_address.code.length > 0);
-    }
-
-    function isERC721_TokenReceiver(
-        address _address,
-        uint256 _tokenId
-    ) private {
-        if (_isSmartContract(_address)) {
-            bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
-            bytes memory _data;
-            bytes4 ERC721Received_result = IERC721TokenReceiver(_address)
-                .onERC721Received(address(this), msg.sender, _tokenId, _data);
-            if (ERC721Received_result != ERC721_TokenReceiver_Hash) {
-                revert("No ERC721Receiver");
-            }
-        }
     }
 }

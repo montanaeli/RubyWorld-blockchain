@@ -5,11 +5,10 @@ import "./ERC721.sol";
 import "src/interfaces/IWeapon.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
-import "src/interfaces/IER721TokenReceiver.sol";
 import "src/interfaces/IRubie.sol";
 import "src/interfaces/IExperience.sol";
-import "src/contracts/OwnersContract.sol";
-import "src/contracts/Rubie.sol";
+import "./OwnersContract.sol";
+import "./Rubie.sol";
 
 /// @dev This contract must implement the IWeapon interface
 contract Weapon is ERC721, IWeapon {
@@ -66,7 +65,7 @@ contract Weapon is ERC721, IWeapon {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newWeapon;
-        isERC721_TokenReceiver(msg.sender, totalSupply);
+        this.onERC721Received(msg.sender, msg.sender, totalSupply, "");
     }
 
     function mintLegendaryWeapon(
@@ -240,25 +239,5 @@ contract Weapon is ERC721, IWeapon {
             .metadataOf(_characterId)
             .requiredExperience -= metadata[_weaponId].requiredExperience;
         metadata[_weaponId].characterID = 0;
-    }
-
-    /// FUNCIONES PRIVADAS
-    function _isSmartContract(address _address) private view returns (bool) {
-        return (_address.code.length > 0);
-    }
-
-    function isERC721_TokenReceiver(
-        address _address,
-        uint256 _tokenId
-    ) private {
-        if (_isSmartContract(_address)) {
-            bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
-            bytes memory _data;
-            bytes4 ERC721Received_result = IERC721TokenReceiver(_address)
-                .onERC721Received(address(this), msg.sender, _tokenId, _data);
-            if (ERC721Received_result != ERC721_TokenReceiver_Hash) {
-                revert("No ERC721Receiver");
-            }
-        }
     }
 }
