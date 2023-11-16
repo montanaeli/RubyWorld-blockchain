@@ -34,7 +34,7 @@ contract Character is ICharacter, ERC721 {
     function getTokensOf(
         address _owner
     ) external view returns (uint256[] memory _tokens) {
-        return ERC721.tokensOf[_owner];
+        return tokensOf[_owner];
     }
 
     function upgradeCharacter(
