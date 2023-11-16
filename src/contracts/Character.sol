@@ -168,4 +168,16 @@ contract Character is ICharacter, ERC721 {
             }
         }
     }
+
+    function setArmorPoints(uint256 _tokenId, uint256 _armorPoints) {
+        metadata[_tokenId].armorPoints = _armorPoints;
+    }
+
+    function setAttackPoints(uint256 _tokenId, uint256 _attackPoints) {
+        metadata[_tokenId].attackPoints = _attackPoints;
+    }
+
+    function setSellPrice(uint256 _tokenId, uint256 _sellPrice) {
+        metadata[_tokenId].sellPrice = _sellPrice;
+    }
 }

@@ -31,10 +31,24 @@ contract Experience is IExperience, ERC20 {
             "Insufficient allowance"
         );
 
-        //TODO: 3 reqs:
-        ///1. Increase the sell price of the user charater for the 10% of the price.
-        ///2. Increase the armor points of the user charater in 10% of the experience buyed.
-        ///3. Increase the weapon points of the user charater in 5% of the experience buyed.
+        address characterContractAddress = OwnersContract(ownersContract)
+            .addressOf("Character");
+
+        ICharacter characterContract = ICharacter(characterContractAddress);
+
+        //TODO: como se obtiene?
+        uint256 ownerId = 0;
+
+        uint256 armorPoints = characterContract.metadataOf(ownerId).armorPoints;
+        uint256 attackPoints = characterContract
+            .metadataOf(ownerId)
+            .attackPoints;
+        uint256 sellPrice = characterContract.metadataOf(ownerId).sellPrice;
+
+        //TODO: falta hacer las cuentas
+        characterContract.setArmorPoints(ownerId, armorPoints);
+        characterContract.setAttackPoints(ownerId, attackPoints);
+        characterContract.setSellPrice(ownerId, sellPrice);
 
         emit Transfer(address(this), msg.sender, _amount);
     }
