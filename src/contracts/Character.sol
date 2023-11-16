@@ -124,10 +124,6 @@ contract Character is ICharacter, ERC721 {
         );
     }
 
-    function setMintingPrice(uint256 _mintPrice) external {
-        mintPrice = _mintPrice;
-    }
-
     function buy(uint256 _tokenId, string memory _newName) external payable {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
@@ -158,12 +154,6 @@ contract Character is ICharacter, ERC721 {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not the owner");
         metadata[_tokenId].onSale = _onSale;
-    }
-
-    function collectFee() external {
-        require(msg.sender == ownersContract, "Not the owner");
-        require(balanceOf[ownersContract] > 0, "zero balance");
-        payable(msg.sender).transfer(balanceOf[ownersContract]);
     }
 
     /// FUNCIONES PRIVADAS

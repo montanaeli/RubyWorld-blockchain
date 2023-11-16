@@ -72,4 +72,12 @@ interface IERC721 {
 
     /// @dev Returns the current mintage price
     function mintPrice() external view returns (uint256 _mintPrice);
+
+    /// @dev Set the mintage price
+    function setMintPrice(uint256 _mintPrice) external;
+
+    /// @dev Transfer to the OwnerContract the total balance in ethers that the contract has accumulated as fees.
+    /// @dev This method must be able to be called only by ownersContract, otherwise it will revert with the message "Not owners contract".
+    /// @dev In the event that the contract does not have a balance, revert with the message "zero balance".
+    function collectFee() external;
 }

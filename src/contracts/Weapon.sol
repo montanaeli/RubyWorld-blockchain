@@ -158,17 +158,6 @@ contract Weapon is ERC721, IWeapon {
         metadata[_tokenId].onSale = _onSale;
     }
 
-    function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == ownersContract, "Not the owner");
-        mintPrice = _mintPrice;
-    }
-
-    function collectFee() external {
-        require(msg.sender == ownersContract, "Not the owner");
-        require(balanceOf[ownersContract] > 0, "zero balance");
-        payable(msg.sender).transfer(balanceOf[ownersContract]);
-    }
-
     function addWeaponToCharacter(
         uint256 _weaponId,
         uint256 _characterId

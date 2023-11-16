@@ -100,14 +100,6 @@ interface IWeapon is IERC721 {
     /// @dev Throw if the tokenId does not exist with "Invalid tokenId"
     function setOnSale(uint256 _tokenId, bool _onSale) external;
 
-    /// @dev Set the mintage price
-    function setMintPrice(uint256 _mintPrice) external;
-
-    /// @dev Transfer to the OwnerContract the total balance in ethers that the contract has accumulated as fees.
-    /// @dev This method must be able to be called only by ownersContract, otherwise it will Throw with the message "Not owners contract".
-    /// @dev In the event that the contract does not have a balance, Throw with the message "zero balance".
-    function collectFee() external;
-
     /// @notice Add a weapon to a character equipment
     /// @dev Throw if ´_weaponId´ does not exist with "Invalid _weaponId"
     /// @dev Throw if ´_characterId´ does not exist with "Invalid _characterId"

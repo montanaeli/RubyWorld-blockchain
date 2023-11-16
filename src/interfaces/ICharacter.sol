@@ -85,9 +85,6 @@ interface ICharacter is IERC721 {
         view
         returns (bool _onSale, uint256 _price, uint256 _requiredExperience);
 
-    /// @dev Set the mintage price
-    function setMintingPrice(uint256 _mintPrice) external;
-
     /// @notice Transfer the ownership of a character from owner address to sender address
     /// @dev The sender must pay the corresponding sellPrice in ETH, otherwise revert with "Not enough ETH"
     /// @dev Revert if the tokenId does not exist with "Invalid tokenId"
@@ -102,9 +99,4 @@ interface ICharacter is IERC721 {
     /// @notice Set a character's onSale property to true to allow the sell of the character. To false otherwise.
     /// @dev Revert if the tokenId does not exist with "Invalid tokenId"
     function setOnSale(uint256 _tokenId, bool _onSale) external;
-
-    /// @dev Transfer to the OwnerContract the total balance in ethers that the contract has accumulated as fees.
-    /// @dev This method must be able to be called only by ownersContract, otherwise it will revert with the message "Not owners contract".
-    /// @dev In the event that the contract does not have a balance, revert with the message "zero balance".
-    function collectFee() external;
 }
