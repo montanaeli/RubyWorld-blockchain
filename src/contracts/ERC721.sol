@@ -24,6 +24,7 @@ contract ERC721 is IERC721 {
     uint256 public mintPrice;
     address public ownersContract;
 
+    mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
@@ -60,6 +61,8 @@ contract ERC721 is IERC721 {
         balanceOf[msg.sender]--;
         balanceOf[_to]++;
         allowance[_tokenId] = address(0);
+        removeTokenFromAddress(msg.sender, _tokenId);
+        addTokenToAddress(_to, _tokenId);
         emit Transfer(msg.sender, _to, _tokenId);
     }
 
@@ -79,6 +82,8 @@ contract ERC721 is IERC721 {
         balanceOf[_from]--;
         balanceOf[_to]++;
         allowance[_tokenId] = address(0);
+        removeTokenFromAddress(_from, _tokenId);
+        addTokenToAddress(_to, _tokenId);
         emit Transfer(_from, _to, _tokenId);
     }
 
@@ -96,5 +101,23 @@ contract ERC721 is IERC721 {
 
     function currentTokenID() external view returns (uint256 _currentTokenID) {
         return totalSupply;
+    }
+
+    function addTokenToAddress(address _address, uint256 _tokenId) internal {
+        tokensOf[_address].push(_tokenId);
+    }
+
+    function removeTokenFromAddress(
+        address _address,
+        uint256 _tokenId
+    ) internal {
+        uint256[] storage tokenList = tokensOf[_address];
+        for (uint256 i = 0; i < tokenList.length; i++) {
+            if (tokenList[i] == _tokenId) {
+                tokenList[i] = tokenList[tokenList.length - 1];
+                tokenList.pop();
+                break;
+            }
+        }
     }
 }

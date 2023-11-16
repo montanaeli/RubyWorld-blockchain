@@ -3,6 +3,7 @@ pragma solidity 0.8.16;
 
 import "./ERC20.sol";
 import "./OwnersContract.sol";
+import "./Character.sol";
 import "./Rubie.sol";
 import "../interfaces/IRubie.sol";
 import "../interfaces/ICharacter.sol";
@@ -34,21 +35,23 @@ contract Experience is IExperience, ERC20 {
         address characterContractAddress = OwnersContract(ownersContract)
             .addressOf("Character");
 
-        ICharacter characterContract = ICharacter(characterContractAddress);
+        Character characterContract = Character(characterContractAddress);
 
-        //TODO: como se obtiene?
-        uint256 ownerId = 0;
+        uint256[] memory tokens = characterContract.getTokensOf(msg.sender);
 
-        uint256 armorPoints = characterContract.metadataOf(ownerId).armorPoints;
-        uint256 attackPoints = characterContract
-            .metadataOf(ownerId)
-            .attackPoints;
-        uint256 sellPrice = characterContract.metadataOf(ownerId).sellPrice;
+        require(tokens.length == 0, "No character found");
 
-        //TODO: falta hacer las cuentas
-        characterContract.setArmorPoints(ownerId, armorPoints);
-        characterContract.setAttackPoints(ownerId, attackPoints);
-        characterContract.setSellPrice(ownerId, sellPrice);
+        //TODO: Check with the team, this is wrong
+        uint256 tokenId = tokens[0];
+
+        characterContract.upgradeCharacter(
+            tokenId,
+            characterContract.metadataOf(tokenId).attackPoints +
+                ((_amount * 5) / 100),
+            characterContract.metadataOf(tokenId).armorPoints +
+                ((_amount * 1) / 100),
+            (characterContract.metadataOf(tokenId).sellPrice * 11) / 10
+        );
 
         emit Transfer(address(this), msg.sender, _amount);
     }

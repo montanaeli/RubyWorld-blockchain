@@ -31,6 +31,23 @@ contract Character is ICharacter, ERC721 {
         return metadata[_tokenId];
     }
 
+    function getTokensOf(
+        address _owner
+    ) external view returns (uint256[] memory _tokens) {
+        return ERC721.tokensOf[_owner];
+    }
+
+    function upgradeCharacter(
+        uint256 _tokenId,
+        uint256 _attackPoints,
+        uint256 _armorPoints,
+        uint256 _sellPrice
+    ) external {
+        metadata[_tokenId].attackPoints = _attackPoints;
+        metadata[_tokenId].armorPoints = _armorPoints;
+        metadata[_tokenId].sellPrice = _sellPrice;
+    }
+
     function weapon(
         uint256 _weaponIndex
     ) external view returns (uint256 _weapon) {
@@ -167,17 +184,5 @@ contract Character is ICharacter, ERC721 {
                 revert("No ERC721Receiver");
             }
         }
-    }
-
-    function setArmorPoints(uint256 _tokenId, uint256 _armorPoints) {
-        metadata[_tokenId].armorPoints = _armorPoints;
-    }
-
-    function setAttackPoints(uint256 _tokenId, uint256 _attackPoints) {
-        metadata[_tokenId].attackPoints = _attackPoints;
-    }
-
-    function setSellPrice(uint256 _tokenId, uint256 _sellPrice) {
-        metadata[_tokenId].sellPrice = _sellPrice;
     }
 }

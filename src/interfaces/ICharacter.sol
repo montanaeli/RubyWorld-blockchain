@@ -21,12 +21,12 @@ interface ICharacter is IERC721 {
 
     // Structure metadata
     struct Metadata {
-        string name;
+        uint256[3] weapon;
         uint256 attackPoints;
         uint256 armorPoints;
-        uint256[3] weapon;
         uint256 sellPrice;
         uint256 requiredExperience;
+        string name;
         bool onSale;
     }
 
@@ -107,10 +107,4 @@ interface ICharacter is IERC721 {
     /// @dev This method must be able to be called only by ownersContract, otherwise it will revert with the message "Not owners contract".
     /// @dev In the event that the contract does not have a balance, revert with the message "zero balance".
     function collectFee() external;
-
-    function setSellPrice(uint256 _tokenId, uint256 _sellPrice) internal;
-
-    function setAttackPoints(uint256 _tokenId, uint256 _attackPoints) internal;
-
-    function setArmorPoints(uint256 _tokenId, uint256 _armorPoints) internal;
 }
