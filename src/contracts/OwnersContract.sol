@@ -19,6 +19,10 @@ contract OwnersContract is IOwnersContract {
         ownerIndex = 0;
     }
 
+    function getSellFeePercentage() public view returns (uint256 _tokenSellFeePercentage) {
+        return tokenSellFeePercentage;
+    }
+
     function owners(
         address _ownerAddress
     ) external view returns (bool _isOwner) {
@@ -43,8 +47,12 @@ contract OwnersContract is IOwnersContract {
     }
 
     function collectFeeFromContract(string memory _contractName) external {
-        //TODO
+        address soldContract = addressOf[_contractName];
+        bytes memory collectFee = abi.encodeWithSignature("collectFee()");
+        (bool _success, bytes memory _returnData) = soldContract.staticcall(collectFee);
+        require(_success, "Call Failed");
     }
+    
 
     function WithdrawEarnings() external {
         //TODO

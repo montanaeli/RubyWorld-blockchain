@@ -166,7 +166,11 @@ contract Weapon is ERC721, IWeapon {
     function collectFee() external {
         require(msg.sender == ownersContract, "Not the owner");
         require(balanceOf[ownersContract] > 0, "zero balance");
-        payable(msg.sender).transfer(balanceOf[ownersContract]);
+        bytes memory getSellFeePercentage = abi.encodeWithSignature("getSellFeePercentage()");
+        (bool _success, bytes memory _returnData) = ownersContract.staticcall(getSellFeePercentage);
+        require(_success, "Call Failed");
+        uint256 feePercentage = abi.decode(_returnData, (uint256));
+        payable(msg.sender).transfer(feePercentage);
     }
 
     function addWeaponToCharacter(
