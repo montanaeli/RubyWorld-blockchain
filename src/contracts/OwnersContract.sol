@@ -14,6 +14,18 @@ contract OwnersContract is IOwnersContract {
     mapping(address => uint256) public balanceOf;
     mapping(string => address) public addressOf;
 
+    modifier onlyOwners() {
+    bool isOwner = false;
+    for (uint256 i = 0; i < ownerIndex; i++) {
+        if (ownersList[i] == msg.sender) {
+            isOwner = true;
+            break;
+        }
+    }
+    require(isOwner, "Not an owner");
+    _;
+}
+
     constructor(uint256 _tokenSellFreePercentage) {
         tokenSellFeePercentage = _tokenSellFreePercentage;
         ownerIndex = 0;
@@ -46,7 +58,7 @@ contract OwnersContract is IOwnersContract {
         addressOf[_contractName] = _contract;
     }
 
-    function collectFeeFromContract(string memory _contractName) external {
+    function collectFeeFromContract(string memory _contractName) external onlyOwners {
         address soldContract = addressOf[_contractName];
         bytes memory collectFee = abi.encodeWithSignature("collectFee()");
         (bool _success, bytes memory _returnData) = soldContract.staticcall(collectFee);
@@ -54,7 +66,11 @@ contract OwnersContract is IOwnersContract {
     }
     
 
-    function WithdrawEarnings() external {
-        //TODO
+    function WithdrawEarnings() external onlyOwners {
+        uint256 amount = balanceOf[msg.sender];
+        require(amount > 0, "No earnings to withdraw");
+
+        balanceOf[msg.sender] = 0;
+        payable(msg.sender).transfer(amount);
     }
 }
