@@ -22,17 +22,13 @@ contract OwnersContract is IOwnersContract {
             break;
         }
     }
-    require(isOwner, "Not an owner");
+    require(isOwner, "Invalid operation for smart contracts");
     _;
 }
 
     constructor(uint256 _tokenSellFreePercentage) {
         tokenSellFeePercentage = _tokenSellFreePercentage;
         ownerIndex = 0;
-    }
-
-    function getSellFeePercentage() public view returns (uint256 _tokenSellFeePercentage) {
-        return tokenSellFeePercentage;
     }
 
     function owners(
@@ -61,15 +57,19 @@ contract OwnersContract is IOwnersContract {
     function collectFeeFromContract(string memory _contractName) external onlyOwners {
         address soldContract = addressOf[_contractName];
         bytes memory collectFee = abi.encodeWithSignature("collectFee()");
-        (bool _success, bytes memory _returnData) = soldContract.staticcall(collectFee);
+        (bool _success, ) = soldContract.staticcall(collectFee);
         require(_success, "Call Failed");
+        uint256 balance = address(this).balance;
+        require(balance > 0, "zero balance");
+        uint256 fee = balance / ownerIndex;
+        for (uint256 i = 0; i < ownerIndex; i++) {
+            balanceOf[ownersList[i]] += fee;
+        }
     }
-    
 
     function WithdrawEarnings() external onlyOwners {
         uint256 amount = balanceOf[msg.sender];
         require(amount > 0, "No earnings to withdraw");
-
         balanceOf[msg.sender] = 0;
         payable(msg.sender).transfer(amount);
     }
