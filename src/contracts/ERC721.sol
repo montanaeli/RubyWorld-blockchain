@@ -135,4 +135,9 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
             }
         }
     }
+
+    function setMintPrice(uint256 _mintPrice) external {
+        require(msg.sender == ownersContract, "Not the owner");
+        mintPrice = _mintPrice;
+    }
 }
