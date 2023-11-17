@@ -3,6 +3,7 @@ pragma solidity 0.8.16;
 
 import "./ERC20.sol";
 import "./OwnersContract.sol";
+import "./Character.sol";
 import "./Rubie.sol";
 import "../interfaces/IRubie.sol";
 import "../interfaces/ICharacter.sol";
@@ -31,10 +32,26 @@ contract Experience is IExperience, ERC20 {
             "Insufficient allowance"
         );
 
-        //TODO: 3 reqs:
-        ///1. Increase the sell price of the user charater for the 10% of the price.
-        ///2. Increase the armor points of the user charater in 10% of the experience buyed.
-        ///3. Increase the weapon points of the user charater in 5% of the experience buyed.
+        address characterContractAddress = OwnersContract(ownersContract)
+            .addressOf("Character");
+
+        Character characterContract = Character(characterContractAddress);
+
+        uint256[] memory tokens = characterContract.getTokensOf(msg.sender);
+
+        require(tokens.length == 0, "No character found");
+
+        //TODO: Check with the team, this is wrong
+        uint256 tokenId = tokens[0];
+
+        characterContract.upgradeCharacter(
+            tokenId,
+            characterContract.metadataOf(tokenId).attackPoints +
+                ((_amount * 5) / 100),
+            characterContract.metadataOf(tokenId).armorPoints +
+                ((_amount * 1) / 100),
+            (characterContract.metadataOf(tokenId).sellPrice * 11) / 10
+        );
 
         emit Transfer(address(this), msg.sender, _amount);
     }
