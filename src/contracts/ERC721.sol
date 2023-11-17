@@ -113,11 +113,6 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         payable(msg.sender).transfer(balanceOf[ownersContract]);
     }
 
-    function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == ownersContract, "Not the owner");
-        mintPrice = _mintPrice;
-    }
-
     function addTokenToAddress(address _address, uint256 _tokenId) internal {
         tokensOf[_address].push(_tokenId);
     }
