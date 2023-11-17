@@ -21,12 +21,12 @@ interface ICharacter is IERC721 {
 
     // Structure metadata
     struct Metadata {
-        string name;
+        uint256[3] weapon;
         uint256 attackPoints;
         uint256 armorPoints;
-        uint256[3] weapon;
         uint256 sellPrice;
         uint256 requiredExperience;
+        string name;
         bool onSale;
     }
 
