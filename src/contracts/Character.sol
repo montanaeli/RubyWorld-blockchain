@@ -20,7 +20,7 @@ contract Character is ICharacter, ERC721 {
         string memory _symbol,
         string memory _tokenURI,
         address _ownersContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownersContract) {
+    ) ERC721(_name, _symbol, _tokenURI, _ownersContract, 1) {
         defaultRequiredExpirience = 100;
     }
 
@@ -75,7 +75,7 @@ contract Character is ICharacter, ERC721 {
         );
         balanceOf[ownersContract] += msg.value;
         Rubie(rubieContractAddress).transfer(msg.sender, 1000);
-        this.onERC721Received(msg.sender, msg.sender, totalSupply, "");
+        this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintHero(

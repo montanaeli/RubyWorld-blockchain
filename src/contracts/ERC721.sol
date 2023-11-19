@@ -30,6 +30,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
+    uint256 internal maxAmountPerAddress;
 
     modifier isValidTokenId(uint256 _tokenId) {
         require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenId");
@@ -45,12 +46,14 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         string memory _name,
         string memory _symbol,
         string memory _tokenURI,
-        address _ownerContract
+        address _ownerContract,
+        uint256 _maxAmountPerAddress
     ) {
         name = _name;
         symbol = _symbol;
         tokenURI = _tokenURI;
         ownersContract = _ownerContract;
+        maxAmountPerAddress = _maxAmountPerAddress;
     }
 
     function safeTransfer(
@@ -58,6 +61,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         uint256 _tokenId
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
         require(ownerOf[_tokenId] == msg.sender, "Not the owner");
+        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
         // TODO: The part of the safe transfer
         ownerOf[_tokenId] = _to;
         balanceOf[msg.sender]--;
@@ -65,8 +69,8 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         allowance[_tokenId] = address(0);
         removeTokenFromAddress(msg.sender, _tokenId);
         addTokenToAddress(_to, _tokenId);
-        //TODO: missing the part of the onERC721Received
         emit Transfer(msg.sender, _to, _tokenId);
+        this.isERC721TokenReceiver(_to, _tokenId);
     }
 
     function safeTransferFrom(
@@ -81,14 +85,15 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
             _from == msg.sender || allowance[_tokenId] == msg.sender,
             "Not the owner"
         );
+        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
         ownerOf[_tokenId] = _to;
         balanceOf[_from]--;
         balanceOf[_to]++;
         allowance[_tokenId] = address(0);
         removeTokenFromAddress(_from, _tokenId);
         addTokenToAddress(_to, _tokenId);
-        //TODO: missing the part of the onERC721Received
         emit Transfer(_from, _to, _tokenId);
+        this.isERC721TokenReceiver(_to, _tokenId);
     }
 
     function approve(

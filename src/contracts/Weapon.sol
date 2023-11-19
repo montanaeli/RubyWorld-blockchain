@@ -29,7 +29,7 @@ contract Weapon is ERC721, IWeapon {
         string memory _tokenURI,
         address _ownerContract,
         address _characterContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownerContract) {
+    ) ERC721(_name, _symbol, _tokenURI, _ownerContract, 3) {
         characterContract = _characterContract;
     }
 
@@ -65,7 +65,7 @@ contract Weapon is ERC721, IWeapon {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newWeapon;
-        this.onERC721Received(msg.sender, msg.sender, totalSupply, "");
+        this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintLegendaryWeapon(

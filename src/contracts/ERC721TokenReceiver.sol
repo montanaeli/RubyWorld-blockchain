@@ -4,24 +4,12 @@ pragma solidity 0.8.16;
 import "../interfaces/IERC721TokenReceiver.sol";
 
 contract ERC721TokenReceiver is IERC721TokenReceiver {
-    function isERC721_TokenReceiver(
-        address _address,
-        uint256 _tokenId
-    ) private {
-        require(_address.code.length > 0, "Invalid contract");
-        bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
-        bytes memory _data;
-        bytes4 ERC721Received_result = this.onERC721Received(
-            address(this),
-            msg.sender,
-            _tokenId,
-            _data
-        );
-        require(
-            ERC721Received_result == ERC721_TokenReceiver_Hash,
-            "No ERC721Receiver"
-        );
-    }
+    event Received(
+        address _operator,
+        address _from,
+        uint256 _tokenId,
+        bytes _data
+    );
 
     function onERC721Received(
         address _operator,
@@ -29,10 +17,23 @@ contract ERC721TokenReceiver is IERC721TokenReceiver {
         uint256 _tokenId,
         bytes memory _data
     ) external returns (bytes4) {
-        isERC721_TokenReceiver(_operator, _tokenId);
+        emit Received(_operator, _from, _tokenId, _data);
         return
             bytes4(
                 keccak256("onERC721Received(address,address,uint256,bytes)")
             );
+    }
+
+    function isERC721TokenReceiver(address _to, uint256 _tokenId) external {
+        require(_to.code.length > 0, "Invalid contract");
+        bytes4 MAGIC_NUMBER = 0x150b7a02;
+        bytes memory _data;
+        bytes4 result = this.onERC721Received(
+            _to,
+            address(this),
+            _tokenId,
+            _data
+        );
+        require(result == MAGIC_NUMBER, "No ERC721Receiver");
     }
 }
