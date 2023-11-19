@@ -2,8 +2,10 @@
 pragma solidity 0.8.16;
 
 import "../interfaces/IERC721.sol";
+import "../interfaces/IERC721TokenReceiver.sol";
+import "./ERC721TokenReceiver.sol";
 
-contract ERC721 is IERC721 {
+contract ERC721 is IERC721, ERC721TokenReceiver {
     // Events
     event Approval(
         address indexed _owner,
@@ -28,6 +30,7 @@ contract ERC721 is IERC721 {
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
+    uint256 internal maxAmountPerAddress;
 
     modifier isValidTokenId(uint256 _tokenId) {
         require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenId");
@@ -43,12 +46,14 @@ contract ERC721 is IERC721 {
         string memory _name,
         string memory _symbol,
         string memory _tokenURI,
-        address _ownerContract
+        address _ownerContract,
+        uint256 _maxAmountPerAddress
     ) {
         name = _name;
         symbol = _symbol;
         tokenURI = _tokenURI;
         ownersContract = _ownerContract;
+        maxAmountPerAddress = _maxAmountPerAddress;
     }
 
     function safeTransfer(
@@ -56,6 +61,7 @@ contract ERC721 is IERC721 {
         uint256 _tokenId
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
         require(ownerOf[_tokenId] == msg.sender, "Not the owner");
+        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
         // TODO: The part of the safe transfer
         ownerOf[_tokenId] = _to;
         balanceOf[msg.sender]--;
@@ -64,6 +70,7 @@ contract ERC721 is IERC721 {
         removeTokenFromAddress(msg.sender, _tokenId);
         addTokenToAddress(_to, _tokenId);
         emit Transfer(msg.sender, _to, _tokenId);
+        this.isERC721TokenReceiver(_to, _tokenId);
     }
 
     function safeTransferFrom(
@@ -78,6 +85,7 @@ contract ERC721 is IERC721 {
             _from == msg.sender || allowance[_tokenId] == msg.sender,
             "Not the owner"
         );
+        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
         ownerOf[_tokenId] = _to;
         balanceOf[_from]--;
         balanceOf[_to]++;
@@ -85,6 +93,7 @@ contract ERC721 is IERC721 {
         removeTokenFromAddress(_from, _tokenId);
         addTokenToAddress(_to, _tokenId);
         emit Transfer(_from, _to, _tokenId);
+        this.isERC721TokenReceiver(_to, _tokenId);
     }
 
     function approve(
@@ -103,6 +112,12 @@ contract ERC721 is IERC721 {
         return totalSupply;
     }
 
+    function collectFee() external {
+        require(msg.sender == ownersContract, "Not the owner");
+        require(balanceOf[ownersContract] > 0, "zero balance");
+        payable(msg.sender).transfer(balanceOf[ownersContract]);
+    }
+
     function addTokenToAddress(address _address, uint256 _tokenId) internal {
         tokensOf[_address].push(_tokenId);
     }
@@ -119,5 +134,10 @@ contract ERC721 is IERC721 {
                 break;
             }
         }
+    }
+
+    function setMintPrice(uint256 _mintPrice) external {
+        require(msg.sender == ownersContract, "Not the owner");
+        mintPrice = _mintPrice;
     }
 }
