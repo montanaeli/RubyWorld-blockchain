@@ -55,15 +55,18 @@ contract OwnersContract is IOwnersContract {
     }
 
     function collectFeeFromContract(string memory _contractName) external onlyOwners {
+
         address soldContract = addressOf[_contractName];
+
         bytes memory collectFee = abi.encodeWithSignature("collectFee()");
         (bool _success, ) = soldContract.staticcall(collectFee);
         require(_success, "Call Failed");
-        uint256 balance = address(this).balance;
+
+        uint256 balance = address(this).balance; // Ganancia recolectada
         require(balance > 0, "zero balance");
-        uint256 fee = balance / ownerIndex;
+        uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir
         for (uint256 i = 0; i < ownerIndex; i++) {
-            balanceOf[ownersList[i]] += fee;
+            balanceOf[ownersList[i]] += feeEarned;
         }
     }
 

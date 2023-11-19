@@ -13,6 +13,8 @@ import "src/contracts/Rubie.sol";
 /// @dev This contract must implement the ICharacter interface
 contract Character is ICharacter, ERC721 {
     uint256 public defaultRequiredExpirience;
+    
+    uint256 totalFees = 0; 
 
     mapping(uint256 => Metadata) public metadata;
 
@@ -149,9 +151,21 @@ contract Character is ICharacter, ERC721 {
                 );
             }
         }
-        balanceOf[ownersContract] += msg.value;
-        ownerOf[_tokenId] = msg.sender;
+        // Tranfiero el dinero y asigno al nuevo propietario
+        address _oldOwner = ownerOf[_tokenId];
+        balanceOf[_oldOwner]--; // tiene un character menos en su balance, dado que lo vende
+        payable(_oldOwner).transfer(metadata[_tokenId].sellPrice);
+        if (msg.value > metadata[_tokenId].sellPrice) { // para no perder el cambio
+            payable(msg.sender).transfer(msg.value - metadata[_tokenId].sellPrice);
+        }
+        // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
+        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner).tokenSellFeePercentage();
+        totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
+
+        ownerOf[_tokenId] = msg.sender; // guardo el quien es el nuevo owner del character
         metadata[_tokenId].name = _newName;
+        balanceOf[msg.sender]++; // tiene un character nuevo en su balance
+
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {
@@ -163,11 +177,9 @@ contract Character is ICharacter, ERC721 {
     function collectFee() external {
         require(msg.sender == ownersContract, "Not the owner");
         require(balanceOf[ownersContract] > 0, "zero balance");
-        bytes memory tokenSellFeePercentage = abi.encodeWithSignature("tokenSellFeePercentage()");
-        (bool _success, bytes memory _returnData) = ownersContract.staticcall(tokenSellFeePercentage);
-        require(_success, "Call Failed");
-        uint256 feePercentage = abi.decode(_returnData, (uint256));
-        payable(msg.sender).transfer(feePercentage);
+
+        payable(msg.sender).transfer(totalFees);
+        totalFees = 0;
     }
 
     /// FUNCIONES PRIVADAS
