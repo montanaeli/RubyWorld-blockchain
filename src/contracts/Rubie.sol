@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import "./ERC20.sol";
 import "../interfaces/IRubie.sol";
 import "../interfaces/IERC20.sol";
+import "../interfaces/IOwnersContract.sol";
 
 contract Rubie is IRubie, ERC20 {
     constructor(
@@ -15,7 +16,10 @@ contract Rubie is IRubie, ERC20 {
     function mint(uint256 _amount, address _recipient) external {
         require(_amount > 0, "Invalid _amount");
         require(_recipient != address(0), "Invalid _recipient");
-        require(msg.sender == ownersContract, "Not the owner");
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
 
         totalSupply += _amount;
         balanceOf[_recipient] += _amount;

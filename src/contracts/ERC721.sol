@@ -3,6 +3,7 @@ pragma solidity 0.8.16;
 
 import "../interfaces/IERC721.sol";
 import "../interfaces/IERC721TokenReceiver.sol";
+import "../interfaces/IOwnersContract.sol";
 import "./ERC721TokenReceiver.sol";
 
 contract ERC721 is IERC721, ERC721TokenReceiver {
@@ -137,7 +138,10 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     }
 
     function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == ownersContract, "Not the owner");
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
         mintPrice = _mintPrice;
     }
 }
