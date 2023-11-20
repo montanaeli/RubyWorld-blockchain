@@ -25,6 +25,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     uint256 public totalSupply;
     uint256 public mintPrice;
     address public ownersContract;
+    uint256 public totalFees  = 0;
 
     mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
@@ -114,8 +115,8 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not the owner");
-        require(balanceOf[ownersContract] > 0, "zero balance");
-        payable(msg.sender).transfer(balanceOf[ownersContract]);
+        payable(msg.sender).transfer(totalFees);
+        totalFees = 0;
     }
 
     function addTokenToAddress(address _address, uint256 _tokenId) internal {
