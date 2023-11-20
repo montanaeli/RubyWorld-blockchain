@@ -8,7 +8,6 @@ interface IERC20 {
     /// @notice Return the symbol of the token
     function symbol() external view returns (string memory _symbol);
 
-    //TODO: Check if this has to be private
     /// @notice Return the owner of the contract
     function ownersContract() external view returns (address _ownersContract);
 
@@ -20,6 +19,16 @@ interface IERC20 {
 
     /// @notice Return the decimals of the token
     function decimals() external view returns (uint256 _decimals);
+
+    /// @notice Issues a new amount of tokens
+    /// Perform the validations in the indicated order:
+    /// @dev Throw if _amount is zero with the message "Invalid _amount"
+    /// @dev Throw if `_recipient` is zero address. Message: "Invalid _recipient"
+    /// @dev Throw if the caller is not the owner of the contract with the message "Not the owner"
+    /// @dev Emit the `Transfer` event with the `_from` parameter set to zero address.
+    /// @param _amount It is the amount of tokens to mint
+    /// @param _recipient It is the recipient account for the new tokens
+    function mint(uint256 _amount, address _recipient) external;
 
     /// @notice Return the amount of tokens that an owner allowed to a spender
     // function allowance(

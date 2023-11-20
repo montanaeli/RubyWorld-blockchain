@@ -3,9 +3,6 @@ pragma solidity 0.8.16;
 
 import "src/interfaces/IOwnersContract.sol";
 
-// TODO: implement all validations missing
-// TODO: implement implement the las two functions.
-
 contract OwnersContract is IOwnersContract {
     uint256 public tokenSellFeePercentage;
     uint256 public ownerIndex;
