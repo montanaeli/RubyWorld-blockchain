@@ -6,15 +6,12 @@ import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "src/interfaces/IRubie.sol";
 import "src/interfaces/IExperience.sol";
-import "src/interfaces/IER721TokenReceiver.sol";
 import "src/contracts/OwnersContract.sol";
 import "src/contracts/Rubie.sol";
 
 /// @dev This contract must implement the ICharacter interface
 contract Character is ICharacter, ERC721 {
     uint256 public defaultRequiredExpirience;
-    
-    uint256 totalFees = 0; 
 
     mapping(uint256 => Metadata) public metadata;
 
@@ -23,7 +20,7 @@ contract Character is ICharacter, ERC721 {
         string memory _symbol,
         string memory _tokenURI,
         address _ownersContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownersContract) {
+    ) ERC721(_name, _symbol, _tokenURI, _ownersContract, 1) {
         defaultRequiredExpirience = 100;
     }
 
@@ -78,7 +75,7 @@ contract Character is ICharacter, ERC721 {
         );
         balanceOf[ownersContract] += msg.value;
         Rubie(rubieContractAddress).transfer(msg.sender, 1000);
-        isERC721_TokenReceiver(msg.sender, totalSupply);
+        this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintHero(
@@ -126,10 +123,6 @@ contract Character is ICharacter, ERC721 {
         );
     }
 
-    function setMintingPrice(uint256 _mintPrice) external {
-        mintPrice = _mintPrice;
-    }
-
     function buy(uint256 _tokenId, string memory _newName) external payable {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
@@ -172,32 +165,5 @@ contract Character is ICharacter, ERC721 {
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(msg.sender == ownerOf[_tokenId], "Not the owner");
         metadata[_tokenId].onSale = _onSale;
-    }
-
-    function collectFee() external {
-        require(msg.sender == ownersContract, "Not the owner");
-
-        payable(msg.sender).transfer(totalFees);
-        totalFees = 0;
-    }
-
-    /// FUNCIONES PRIVADAS
-    function _isSmartContract(address _address) private view returns (bool) {
-        return (_address.code.length > 0);
-    }
-
-    function isERC721_TokenReceiver(
-        address _address,
-        uint256 _tokenId
-    ) private {
-        if (_isSmartContract(_address)) {
-            bytes4 ERC721_TokenReceiver_Hash = 0x150b7a02;
-            bytes memory _data;
-            bytes4 ERC721Received_result = IERC721TokenReceiver(_address)
-                .onERC721Received(address(this), msg.sender, _tokenId, _data);
-            if (ERC721Received_result != ERC721_TokenReceiver_Hash) {
-                revert("No ERC721Receiver");
-            }
-        }
     }
 }
