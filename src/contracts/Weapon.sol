@@ -14,6 +14,8 @@ import "src/contracts/Rubie.sol";
 /// @dev This contract must implement the IWeapon interface
 contract Weapon is ERC721, IWeapon {
     address public characterContract;
+    uint256 totalFees = 0; 
+
     mapping(uint256 => Metadata) public metadata;
 
     modifier isContractOwner(address _address) {
@@ -147,9 +149,19 @@ contract Weapon is ERC721, IWeapon {
                 .metadataOf(metadata[_tokenId].characterID)
                 .requiredExperience -= metadata[_tokenId].requiredExperience;
         }
+
+        address _oldOwner = ownerOf[_tokenId];
+        payable(_oldOwner).transfer(metadata[_tokenId].sellPrice);
+        if (msg.value > metadata[_tokenId].sellPrice) { // para no perder el cambio
+            payable(msg.sender).transfer(msg.value - metadata[_tokenId].sellPrice);
+        }
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
         this.safeTransfer(msg.sender, _tokenId);
+
+        // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
+        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner).tokenSellFeePercentage();
+        totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {
@@ -159,18 +171,14 @@ contract Weapon is ERC721, IWeapon {
     }
 
     function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == ownersContract, "Not the owner");
+        require(IOwnersContract(ownersContract).owners(msg.sender), "Not the owner");
         mintPrice = _mintPrice;
     }
 
     function collectFee() external {
-        require(msg.sender == ownersContract, "Not the owner");
-        require(balanceOf[ownersContract] > 0, "zero balance");
-        bytes memory tokenSellFeePercentage = abi.encodeWithSignature("tokenSellFeePercentage()");
-        (bool _success, bytes memory _returnData) = ownersContract.staticcall(tokenSellFeePercentage);
-        require(_success, "Call Failed");
-        uint256 feePercentage = abi.decode(_returnData, (uint256));
-        payable(msg.sender).transfer(feePercentage);
+        require(IOwnersContract(ownersContract).owners(msg.sender), "Not the owner");
+        payable(msg.sender).transfer(totalFees);
+        totalFees = 0;
     }
 
     function addWeaponToCharacter(

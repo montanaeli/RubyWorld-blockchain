@@ -73,6 +73,6 @@ contract OwnersContract is IOwnersContract {
     function WithdrawEarnings() external onlyOwners {
         uint256 balance = address(this).balance;
         require(balance > 0, "No earnings to withdraw");
-        payable(msg.sender).transfer(balance);
+        payable(msg.sender).transfer(balance); 
     }
 }

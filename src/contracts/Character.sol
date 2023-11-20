@@ -158,7 +158,7 @@ contract Character is ICharacter, ERC721 {
         if (msg.value > metadata[_tokenId].sellPrice) { // para no perder el cambio
             payable(msg.sender).transfer(msg.value - metadata[_tokenId].sellPrice);
         }
-        // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
+        // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
         uint256 tokenSellFeePercentage = OwnersContract(_oldOwner).tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
 
@@ -176,7 +176,6 @@ contract Character is ICharacter, ERC721 {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not the owner");
-        require(balanceOf[ownersContract] > 0, "zero balance");
 
         payable(msg.sender).transfer(totalFees);
         totalFees = 0;
