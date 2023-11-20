@@ -13,20 +13,6 @@ contract Rubie is IRubie, ERC20 {
         address _ownersContract
     ) ERC20(_name, _symbol, _ownersContract) {}
 
-    function mint(uint256 _amount, address _recipient) external {
-        require(_amount > 0, "Invalid _amount");
-        require(_recipient != address(0), "Invalid _recipient");
-        require(
-            IOwnersContract(ownersContract).owners(msg.sender),
-            "Not the owner"
-        );
-
-        totalSupply += _amount;
-        balanceOf[_recipient] += _amount;
-
-        emit Transfer(address(0), _recipient, _amount);
-    }
-
     function buy(uint256 _amount) external payable {
         require(msg.value >= (_amount / price), "Insufficient ether");
 

@@ -13,6 +13,7 @@ import "./Rubie.sol";
 /// @dev This contract must implement the IWeapon interface
 contract Weapon is ERC721, IWeapon {
     address public characterContract;
+
     mapping(uint256 => Metadata) public metadata;
 
     modifier isContractOwner(address _address) {
@@ -161,9 +162,19 @@ contract Weapon is ERC721, IWeapon {
                 .metadataOf(metadata[_tokenId].characterID)
                 .requiredExperience -= metadata[_tokenId].requiredExperience;
         }
+
+        address _oldOwner = ownerOf[_tokenId];
+        payable(_oldOwner).transfer(metadata[_tokenId].sellPrice);
+        if (msg.value > metadata[_tokenId].sellPrice) { // para no perder el cambio
+            payable(msg.sender).transfer(msg.value - metadata[_tokenId].sellPrice);
+        }
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
         this.safeTransfer(msg.sender, _tokenId);
+
+        // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
+        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner).tokenSellFeePercentage();
+        totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {

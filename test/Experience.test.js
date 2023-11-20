@@ -6,16 +6,16 @@ chai.use(solidity);
 const { expect } = chai;
 
 const zeroAddress = ethers.constants.AddressZero;
-const contractPath = "src/contracts/Rubie.sol:Rubie";
+const contractPath = "src/contracts/Experience.sol:Experience";
 
-const name = "Rubie Contract";
-const symbol = "rub";
+const name = "Experience Contract";
+const symbol = "exp";
 
 let ownerAddress;
 let ownersContract;
-let rubieContract;
+let experienceContract;
 
-describe("Rubie tests", () => {
+describe("Experience tests", () => {
   before(async () => {
     [signer, account1, account2, account3] = await ethers.getSigners();
     provider = ethers.provider;
@@ -33,18 +33,22 @@ describe("Rubie tests", () => {
 
     ownerAddress = signer.address;
 
-    const rubieContractFactory = await ethers.getContractFactory(
+    const experienceContractFactory = await ethers.getContractFactory(
       contractPath,
       signer
     );
 
-    rubieContract = await rubieContractFactory.deploy(
+    experienceContract = await experienceContractFactory.deploy(
       name,
       symbol,
       ownersContract.address
     );
   });
-  describe("No more tests to perform, everything covered inside ERC20.test.js because Rubie extends from ERC20", () => {
+
+  describe("Method buy", () => {
+    it("Should buy experience", async () => {});
+  });
+  describe("No more tests to perform, everything covered inside ERC20.test.js because Experience extends from ERC20", () => {
     it("Should be true", async () => {
       expect(true).to.equal(true);
     });
