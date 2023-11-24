@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import "../interfaces/IERC20.sol";
 import "../interfaces/IOwnersContract.sol";
 
+/// @dev The contract is not abstract so we can test it
 contract ERC20 is IERC20 {
     /// STATE VARIABLES
     string public name;
@@ -29,13 +30,6 @@ contract ERC20 is IERC20 {
         uint256 _value
     );
 
-    /// @notice Trigger on any successful call to `burn` method
-    event Burn(
-        address indexed _from,
-        address indexed _commandedBy,
-        uint256 _value
-    );
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -47,6 +41,12 @@ contract ERC20 is IERC20 {
         name = _name;
         symbol = _symbol;
         ownersContract = _ownersContract;
+        price = 1;
+
+        //TODO: Talk with David about this
+        uint256 initialSupplyOwners = 10 ** 10;
+        totalSupply = initialSupplyOwners;
+        balanceOf[address(1)] = initialSupplyOwners;
     }
 
     function transfer(address _to, uint256 _value) external returns (bool) {
@@ -73,9 +73,10 @@ contract ERC20 is IERC20 {
         require(_from != _to, "Invalid recipient, same as remitter");
         require(_value > 0, "Invalid _value");
         require(balanceOf[_from] >= _value, "Insufficient balance");
-
-        //TODO: Check what it means by "Throw if `msg.sender` is not the current owner or an approved address with permission to spend the balance of the '_from' account"
-        require(allowance[_from][_to] >= _value, "Insufficent allowance");
+        require(
+            msg.sender == _from || allowance[_from][_to] >= _value,
+            "Insufficent allowance"
+        );
 
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
@@ -118,5 +119,12 @@ contract ERC20 is IERC20 {
         balanceOf[_recipient] += _amount;
 
         emit Transfer(address(0), _recipient, _amount);
+    }
+
+    //TODO: check, this bypass allowance
+    function internalTransferFrom(address _spender, uint256 _value) external {
+        allowance[address(1)][_spender] = _value;
+        this.transferFrom(address(1), _spender, _value);
+        allowance[address(1)][_spender] = 0;
     }
 }

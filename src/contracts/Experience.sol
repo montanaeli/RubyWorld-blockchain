@@ -2,10 +2,10 @@
 pragma solidity 0.8.16;
 
 import "./ERC20.sol";
-import "./OwnersContract.sol";
 import "./Character.sol";
 import "./Rubie.sol";
 import "../interfaces/IRubie.sol";
+import "../interfaces/IOwnersContract.sol";
 import "../interfaces/ICharacter.sol";
 import "../interfaces/IExperience.sol";
 import "../interfaces/IRubie.sol";
@@ -18,31 +18,28 @@ contract Experience is IExperience, ERC20 {
     ) ERC20(_name, _symbol, _ownersContract) {}
 
     function buy(uint256 _amount) external {
-        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
-            "Rubie"
-        );
+        address rubieContractAddress = IOwnersContract(ownersContract)
+            .addressOf("Rubie");
 
         require(
-            Rubie(rubieContractAddress).balanceOf(msg.sender) >= _amount,
+            IRubie(rubieContractAddress).balanceOf(msg.sender) >= _amount,
             "Insufficient balance"
         );
 
-        require(
-            this.allowance(msg.sender, address(this)) >= _amount,
-            "Insufficient allowance"
-        );
+        //TODO: Not so sure how to bypass this
+        // require(
+        //     allowance[address(this)][msg.sender] >= _amount,
+        //     "Insufficient allowance"
+        // );
 
-        address characterContractAddress = OwnersContract(ownersContract)
+        address characterContractAddress = IOwnersContract(ownersContract)
             .addressOf("Character");
 
         Character characterContract = Character(characterContractAddress);
 
-        uint256[] memory tokens = characterContract.getTokensOf(msg.sender);
+        uint256 tokenId = characterContract.getCharacterTokenId(msg.sender);
 
-        require(tokens.length == 0, "No character found");
-
-        //TODO: Check with the team, this is wrong
-        uint256 tokenId = tokens[0];
+        this.internalTransferFrom(msg.sender, _amount);
 
         characterContract.upgradeCharacter(
             tokenId,

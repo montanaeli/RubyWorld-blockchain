@@ -2,17 +2,14 @@
 pragma solidity 0.8.16;
 
 import "./ERC721.sol";
+import "./Rubie.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "src/interfaces/IRubie.sol";
 import "src/interfaces/IExperience.sol";
-import "src/contracts/OwnersContract.sol";
-import "src/contracts/Rubie.sol";
 
 /// @dev This contract must implement the ICharacter interface
 contract Character is ICharacter, ERC721 {
-    uint256 public defaultRequiredExpirience;
-
     mapping(uint256 => Metadata) public metadata;
 
     constructor(
@@ -20,9 +17,7 @@ contract Character is ICharacter, ERC721 {
         string memory _symbol,
         string memory _tokenURI,
         address _ownersContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownersContract, 1) {
-        defaultRequiredExpirience = 100;
-    }
+    ) ERC721(_name, _symbol, _tokenURI, _ownersContract, 1) {}
 
     function metadataOf(
         uint256 _tokenId
@@ -30,10 +25,11 @@ contract Character is ICharacter, ERC721 {
         return metadata[_tokenId];
     }
 
-    function getTokensOf(
+    function getCharacterTokenId(
         address _owner
-    ) external view returns (uint256[] memory _tokens) {
-        return tokensOf[_owner];
+    ) external view returns (uint256 _tokens) {
+        require(tokensOf[_owner].length > 0, "No character found");
+        return tokensOf[_owner][0];
     }
 
     function upgradeCharacter(
@@ -63,18 +59,17 @@ contract Character is ICharacter, ERC721 {
             armorPoints: 50,
             weapon: defaultEmptyWeapons,
             sellPrice: mintPrice,
-            requiredExperience: defaultRequiredExpirience,
+            requiredExperience: 100,
             onSale: false
         });
         totalSupply++;
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
+        tokensOf[msg.sender].push(totalSupply);
         metadata[totalSupply] = newCharacterMetadata;
-        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
-            "Rubie"
-        );
-        balanceOf[ownersContract] += msg.value;
-        Rubie(rubieContractAddress).transfer(msg.sender, 1000);
+        address rubieContractAddress = IOwnersContract(ownersContract)
+            .addressOf("Rubie");
+        Rubie(rubieContractAddress).internalTransferFrom(msg.sender, 1000);
         this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
@@ -90,7 +85,7 @@ contract Character is ICharacter, ERC721 {
         require(_sellPrice > 0, "Invalid _sellPrice");
         require(_requiredExperience > 100, "Invalid _requiredExperience");
         require(
-            OwnersContract(ownersContract).owners(msg.sender),
+            IOwnersContract(ownersContract).owners(msg.sender),
             "Not the owner"
         );
         Metadata memory newCharacterMetadata = Metadata({
@@ -127,8 +122,10 @@ contract Character is ICharacter, ERC721 {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "Character not on sale");
-        address experienceContractAddress = OwnersContract(ownersContract)
+        address experienceContractAddress = IOwnersContract(ownersContract)
             .addressOf("Experience");
+
+        //TODO: what is this? if a character is bought the experience should be transfered right? this has no much sense
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,

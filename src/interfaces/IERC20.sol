@@ -20,16 +20,6 @@ interface IERC20 {
     /// @notice Return the decimals of the token
     function decimals() external view returns (uint256 _decimals);
 
-    /// @notice Issues a new amount of tokens
-    /// Perform the validations in the indicated order:
-    /// @dev Throw if _amount is zero with the message "Invalid _amount"
-    /// @dev Throw if `_recipient` is zero address. Message: "Invalid _recipient"
-    /// @dev Throw if the caller is not the owner of the contract with the message "Not the owner"
-    /// @dev Emit the `Transfer` event with the `_from` parameter set to zero address.
-    /// @param _amount It is the amount of tokens to mint
-    /// @param _recipient It is the recipient account for the new tokens
-    function mint(uint256 _amount, address _recipient) external;
-
     /// @notice Return the amount of tokens that an owner allowed to a spender
     // function allowance(
     //     address _owner,
@@ -93,4 +83,14 @@ interface IERC20 {
     /// @dev Throw if the caller is not the owner of the contract with the message "Not the owner"
     /// @param _price It is the new price of the token
     function setPrice(uint256 _price) external;
+
+    /// @notice Issues a new amount of tokens
+    /// Perform the validations in the indicated order:
+    /// @dev Throw if _amount is zero with the message "Invalid _amount"
+    /// @dev Throw if `_recipient` is zero address. Message: "Invalid _recipient"
+    /// @dev Throw if the caller is not the owner of the contract with the message "Not the owner"
+    /// @dev Emit the `Transfer` event with the `_from` parameter set to zero address.
+    /// @param _amount It is the amount of tokens to mint
+    /// @param _recipient It is the recipient account for the new tokens
+    function mint(uint256 _amount, address _recipient) external;
 }

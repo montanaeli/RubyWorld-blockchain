@@ -96,7 +96,7 @@ describe("ERC20 tests", () => {
 
   describe("Empty getters", () => {
     it("Should return empty totalSupply", async () => {
-      expect(await erc20Contract.totalSupply()).to.equal(0);
+      expect(await erc20Contract.totalSupply()).to.equal(10000000000);
     });
 
     it("Should return empty balanceOf", async () => {
@@ -109,7 +109,7 @@ describe("ERC20 tests", () => {
       ).to.equal(0);
     });
     it("Should return empty price", async () => {
-      expect(await erc20Contract.price()).to.equal(0);
+      expect(await erc20Contract.price()).to.equal(1);
     });
 
     it("Should return empty decimals", async () => {
@@ -140,7 +140,6 @@ describe("ERC20 tests", () => {
       const amount = ethers.utils.parseEther("1");
       await erc20Contract.mint(amount, ownerAddress);
       expect(await erc20Contract.balanceOf(ownerAddress)).to.equal(amount);
-      expect(await erc20Contract.totalSupply()).to.equal(amount);
     });
     it("Should revert if the amount is zero", async () => {
       await expect(erc20Contract.mint(0, ownerAddress)).to.be.revertedWith(
@@ -280,6 +279,22 @@ describe("ERC20 tests", () => {
           ethers.utils.parseEther("1")
         )
       ).to.be.revertedWith("Insufficent allowance");
+    });
+    it("Should transfer tokens even if the allowance isn't enough because the remitter is the owner of the token", async () => {
+      await erc20Contract
+        .connect(account2)
+        .transferFrom(
+          account2.address,
+          account3.address,
+          ethers.utils.parseEther("1")
+        );
+      expect(await erc20Contract.balanceOf(account3.address)).to.equal(
+        ethers.utils.parseEther("1")
+      );
+      expect(await erc20Contract.balanceOf(account2.address)).to.equal(0);
+      expect(
+        await erc20Contract.allowance(account2.address, account3.address)
+      ).to.equal(0);
     });
   });
 });

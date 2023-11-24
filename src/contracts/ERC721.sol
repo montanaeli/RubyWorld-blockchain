@@ -31,7 +31,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
-    uint256 internal maxAmountPerAddress;
+    uint256 private maxAmountPerAddress;
 
     modifier isValidTokenId(uint256 _tokenId) {
         require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenId");
@@ -62,7 +62,10 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         uint256 _tokenId
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
         require(ownerOf[_tokenId] == msg.sender, "Not the owner");
-        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
+        require(
+            maxAmountPerAddress == 0 || balanceOf[_to] < maxAmountPerAddress,
+            "Max amount reached"
+        );
         // TODO: The part of the safe transfer
         ownerOf[_tokenId] = _to;
         balanceOf[msg.sender]--;
@@ -86,7 +89,10 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
             _from == msg.sender || allowance[_tokenId] == msg.sender,
             "Not the owner"
         );
-        require(balanceOf[_to] < maxAmountPerAddress, "Max amount reached");
+        require(
+            maxAmountPerAddress == 0 || balanceOf[_to] < maxAmountPerAddress,
+            "Max amount reached"
+        );
         ownerOf[_tokenId] = _to;
         balanceOf[_from]--;
         balanceOf[_to]++;
@@ -107,6 +113,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
             "Not the owner"
         );
         allowance[_tokenId] = _approved;
+        emit Approval(_tokenOwner, _approved, _tokenId);
     }
 
     function currentTokenID() external view returns (uint256 _currentTokenID) {

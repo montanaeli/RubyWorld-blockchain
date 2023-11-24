@@ -7,8 +7,6 @@ import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "src/interfaces/IRubie.sol";
 import "src/interfaces/IExperience.sol";
-import "./OwnersContract.sol";
-import "./Rubie.sol";
 
 /// @dev This contract must implement the IWeapon interface
 contract Weapon is ERC721, IWeapon {
@@ -18,7 +16,7 @@ contract Weapon is ERC721, IWeapon {
 
     modifier isContractOwner(address _address) {
         require(
-            OwnersContract(ownersContract).owners(_address),
+            IOwnersContract(ownersContract).owners(_address),
             "Not the owner"
         );
         _;
@@ -30,7 +28,7 @@ contract Weapon is ERC721, IWeapon {
         string memory _tokenURI,
         address _ownerContract,
         address _characterContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownerContract, 3) {
+    ) ERC721(_name, _symbol, _tokenURI, _ownerContract, 0) {
         characterContract = _characterContract;
     }
 
@@ -42,15 +40,17 @@ contract Weapon is ERC721, IWeapon {
 
     function safeMint(string memory _name) external {
         require(bytes(_name).length > 0, "Invalid name");
-        address rubiesAddressContract = OwnersContract(ownersContract)
+        address rubiesAddressContract = IOwnersContract(ownersContract)
             .addressOf("Rubie");
         require(
-            Rubie(rubiesAddressContract).balanceOf(msg.sender) >= mintPrice,
+            IRubie(rubiesAddressContract).balanceOf(msg.sender) >= mintPrice,
             "Insufficient balance"
         );
         require(
-            Rubie(rubiesAddressContract).allowance(msg.sender, address(this)) >=
-                mintPrice,
+            IRubie(rubiesAddressContract).allowance(
+                msg.sender,
+                address(this)
+            ) >= mintPrice,
             "Insufficient allowance"
         );
         Metadata memory newWeapon = Metadata({
@@ -113,23 +113,22 @@ contract Weapon is ERC721, IWeapon {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough Rubies");
         require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "weapon not on sale");
-        address experienceContractAddress = OwnersContract(ownersContract)
+        address experienceContractAddress = IOwnersContract(ownersContract)
             .addressOf("Experience");
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
-        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
-            "Rubie"
-        );
+        address rubieContractAddress = IOwnersContract(ownersContract)
+            .addressOf("Rubie");
         require(
             IRubie(rubieContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].sellPrice,
             "Insufficient Rubies"
         );
         require(
-            Rubie(rubieContractAddress).allowance(msg.sender, address(this)) >=
+            IRubie(rubieContractAddress).allowance(msg.sender, address(this)) >=
                 mintPrice,
             "Insufficient allowance"
         );
@@ -150,15 +149,19 @@ contract Weapon is ERC721, IWeapon {
 
         address _oldOwner = ownerOf[_tokenId];
         payable(_oldOwner).transfer(metadata[_tokenId].sellPrice);
-        if (msg.value > metadata[_tokenId].sellPrice) { // para no perder el cambio
-            payable(msg.sender).transfer(msg.value - metadata[_tokenId].sellPrice);
+        if (msg.value > metadata[_tokenId].sellPrice) {
+            // para no perder el cambio
+            payable(msg.sender).transfer(
+                msg.value - metadata[_tokenId].sellPrice
+            );
         }
         ownerOf[_tokenId] = msg.sender;
         metadata[_tokenId].name = _newName;
         this.safeTransfer(msg.sender, _tokenId);
 
         // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
-        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner).tokenSellFeePercentage();
+        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner)
+            .tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
     }
 
