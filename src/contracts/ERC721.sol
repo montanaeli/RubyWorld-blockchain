@@ -3,9 +3,10 @@ pragma solidity 0.8.16;
 
 import "../interfaces/IERC721.sol";
 import "../interfaces/IERC721TokenReceiver.sol";
+import "../interfaces/IOwnersContract.sol";
 import "./ERC721TokenReceiver.sol";
 
-contract ERC721 is IERC721, ERC721TokenReceiver {
+abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     // Events
     event Approval(
         address indexed _owner,
@@ -25,7 +26,7 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     uint256 public totalSupply;
     uint256 public mintPrice;
     address public ownersContract;
-    uint256 public totalFees  = 0;
+    uint256 public totalFees = 0;
 
     mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
@@ -50,6 +51,14 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
         address _ownerContract,
         uint256 _maxAmountPerAddress
     ) {
+        require(
+            bytes(_name).length > 0 &&
+                bytes(_symbol).length > 0 &&
+                bytes(_tokenURI).length > 0,
+            "_name, _symbol and _tokenURI are mandatory parameters"
+        );
+        require(bytes(_symbol).length == 3, "Invalid symbol");
+        require(ownersContract != address(0), "Invalid address");
         name = _name;
         symbol = _symbol;
         tokenURI = _tokenURI;
@@ -145,7 +154,10 @@ contract ERC721 is IERC721, ERC721TokenReceiver {
     }
 
     function setMintPrice(uint256 _mintPrice) external {
-        require(msg.sender == ownersContract, "Not the owner");
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
         mintPrice = _mintPrice;
     }
 }

@@ -28,7 +28,11 @@ contract Weapon is ERC721, IWeapon {
         string memory _tokenURI,
         address _ownerContract,
         address _characterContract
-    ) ERC721(_name, _symbol, _tokenURI, _ownerContract, 0) {
+    ) ERC721(_name, _symbol, _tokenURI, _ownerContract, 3) {
+        require(
+            _characterContract != address(0),
+            "Invalid character contract address"
+        );
         characterContract = _characterContract;
     }
 
@@ -66,7 +70,7 @@ contract Weapon is ERC721, IWeapon {
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
         metadata[totalSupply] = newWeapon;
-        this.isERC721TokenReceiver(msg.sender, totalSupply);
+        //this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
     function mintLegendaryWeapon(
@@ -74,17 +78,21 @@ contract Weapon is ERC721, IWeapon {
         uint256 _armorPoints,
         uint256 _sellPrice,
         uint256 _requiredExperience
-    ) external isContractOwner(msg.sender) {
+    ) external {
         require(_attackPoints >= 150, "Invalid _attackPoints");
         require(_armorPoints >= 100, "Invalid _armorPoints");
-        require(_sellPrice >= 0, "Invalid _sellPrice");
+        require(_sellPrice > 0, "Invalid _sellPrice");
         require(_requiredExperience >= 10, "Invalid _requiredExperience");
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
         Metadata memory newLegendaryWeapon = Metadata({
             characterID: 0,
-            attackPoints: 30,
-            armorPoints: 5,
-            sellPrice: mintPrice,
-            requiredExperience: 10,
+            attackPoints: _attackPoints,
+            armorPoints: _armorPoints,
+            sellPrice: _sellPrice,
+            requiredExperience: _requiredExperience,
             name: "Lengendary weapon name",
             onSale: true
         });
@@ -101,6 +109,7 @@ contract Weapon is ERC721, IWeapon {
         view
         returns (bool _onSale, uint256 _price, uint256 _requiredExperience)
     {
+        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
         Metadata memory weaponMetadata = metadata[_tokenId];
         return (
             weaponMetadata.onSale,
@@ -160,7 +169,7 @@ contract Weapon is ERC721, IWeapon {
         this.safeTransfer(msg.sender, _tokenId);
 
         // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
-        uint256 tokenSellFeePercentage = OwnersContract(_oldOwner)
+        uint256 tokenSellFeePercentage = IOwnersContract(_oldOwner)
             .tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
     }
