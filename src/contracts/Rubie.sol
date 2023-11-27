@@ -2,10 +2,10 @@
 pragma solidity 0.8.16;
 
 import "./ERC20.sol";
-import "../interfaces/IRubie.sol";
-import "../interfaces/IOwnersContract.sol";
-import "../interfaces/IERC20.sol";
-import "../interfaces/IOwnersContract.sol";
+import "src/interfaces/IRubie.sol";
+import "src/interfaces/IOwnersContract.sol";
+import "src/interfaces/IERC20.sol";
+import "src/interfaces/IOwnersContract.sol";
 
 contract Rubie is IRubie, ERC20 {
     constructor(

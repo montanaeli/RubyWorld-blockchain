@@ -43,6 +43,8 @@ describe("Rubie tests", () => {
       symbol,
       ownersContract.address
     );
+
+    await rubieContract.setPrice(1);
   });
   describe("Intitalization tests", () => {
     it("Should have the correct price", async () => {

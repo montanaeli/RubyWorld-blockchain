@@ -2,10 +2,10 @@
 pragma solidity 0.8.16;
 
 import "./ERC721.sol";
-import "./Rubie.sol";
 import "src/interfaces/ICharacter.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "src/interfaces/IRubie.sol";
+import "src/interfaces/IWeapon.sol";
 import "src/interfaces/IExperience.sol";
 
 /// @dev This contract must implement the ICharacter interface
@@ -21,23 +21,33 @@ contract Character is ICharacter, ERC721 {
 
     function metadataOf(
         uint256 _tokenId
-    ) external view returns (Metadata memory _metadata) {
+    )
+        external
+        view
+        isValidTokenId(_tokenId)
+        returns (Metadata memory _metadata)
+    {
         return metadata[_tokenId];
     }
 
     function getCharacterTokenId(
         address _owner
-    ) external view returns (uint256 _tokens) {
+    ) external view isValidAddress(_owner) returns (uint256 _tokens) {
         require(tokensOf[_owner].length > 0, "No character found");
         return tokensOf[_owner][0];
     }
 
-    function upgradeCharacter(
+    function setMetadataFromExperience(
         uint256 _tokenId,
         uint256 _attackPoints,
         uint256 _armorPoints,
         uint256 _sellPrice
-    ) external {
+    ) external isValidTokenId(_tokenId) {
+        require(
+            msg.sender ==
+                IOwnersContract(ownersContract).addressOf("Experience"),
+            "Not experience contract"
+        );
         metadata[_tokenId].attackPoints = _attackPoints;
         metadata[_tokenId].armorPoints = _armorPoints;
         metadata[_tokenId].sellPrice = _sellPrice;
@@ -45,7 +55,7 @@ contract Character is ICharacter, ERC721 {
 
     function weapon(
         uint256 _weaponIndex
-    ) external view returns (uint256 _weapon) {
+    ) external view isValidTokenId(_weaponIndex) returns (uint256 _weapon) {
         return metadata[_weaponIndex].weapon[_weaponIndex];
     }
 
@@ -70,8 +80,8 @@ contract Character is ICharacter, ERC721 {
         balanceOf[ownersContract] += msg.value;
         address rubieContractAddress = IOwnersContract(ownersContract)
             .addressOf("Rubie");
-        Rubie(rubieContractAddress).mintFromCharacter(1000);
-        Rubie(rubieContractAddress).transfer(msg.sender, 1000);
+        IRubie(rubieContractAddress).mintFromCharacter(1000);
+        IRubie(rubieContractAddress).transfer(msg.sender, 1000);
         this.isERC721TokenReceiver(msg.sender, totalSupply);
     }
 
@@ -110,6 +120,7 @@ contract Character is ICharacter, ERC721 {
     )
         external
         view
+        isValidTokenId(_tokenId)
         returns (bool _onSale, uint256 _price, uint256 _requiredExperience)
     {
         Metadata memory characterMetadata = metadata[_tokenId];
@@ -122,21 +133,21 @@ contract Character is ICharacter, ERC721 {
 
     function buy(uint256 _tokenId, string memory _newName) external payable {
         require(msg.value >= metadata[_tokenId].sellPrice, "Not enough ETH");
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
+        require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenId");
         require(metadata[_tokenId].onSale, "Character not on sale");
         address experienceContractAddress = IOwnersContract(ownersContract)
             .addressOf("Experience");
 
-        //TODO: what is this? if a character is bought the experience should be transfered right? this has no much sense
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
+
         /// Transfer the weapons
         for (uint256 i = 0; i < metadata[_tokenId].weapon.length; i++) {
             if (metadata[_tokenId].weapon[i] != 0) {
-                IExperience(experienceContractAddress).transferFrom(
+                IWeapon(experienceContractAddress).safeTransferFrom(
                     msg.sender,
                     ownerOf[_tokenId],
                     metadata[_tokenId].weapon[i]
@@ -145,7 +156,7 @@ contract Character is ICharacter, ERC721 {
         }
         // Tranfiero el dinero y asigno al nuevo propietario
         address _oldOwner = ownerOf[_tokenId];
-        balanceOf[_oldOwner]--; // tiene un character menos en su balance, dado que lo vende
+
         payable(_oldOwner).transfer(metadata[_tokenId].sellPrice);
         if (msg.value > metadata[_tokenId].sellPrice) {
             // para no perder el cambio
@@ -153,19 +164,42 @@ contract Character is ICharacter, ERC721 {
                 msg.value - metadata[_tokenId].sellPrice
             );
         }
+
+        metadata[_tokenId].name = _newName;
+        this.safeTransferFrom(_oldOwner, msg.sender, _tokenId);
+
         // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
         uint256 tokenSellFeePercentage = IOwnersContract(_oldOwner)
             .tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
-
-        ownerOf[_tokenId] = msg.sender; // guardo el quien es el nuevo owner del character
-        metadata[_tokenId].name = _newName;
-        balanceOf[msg.sender]++; // tiene un character nuevo en su balance
     }
 
-    function setOnSale(uint256 _tokenId, bool _onSale) external {
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
-        require(msg.sender == ownerOf[_tokenId], "Not the owner");
+    function setMintingPrice(uint256 _mintPrice) external {
+        this.setMintPrice(_mintPrice);
+    }
+
+    function setOnSale(
+        uint256 _tokenId,
+        bool _onSale
+    ) external isValidTokenId(_tokenId) {
+        require(msg.sender == ownerOf[_tokenId], "Not authorized");
         metadata[_tokenId].onSale = _onSale;
+    }
+
+    function setMetadataFromWeapon(
+        uint256 _tokenId,
+        uint256 _attackPoints,
+        uint256 _armorPoints,
+        uint256 _sellPrice,
+        uint256 _requiredExperience
+    ) external isValidTokenId(_tokenId) {
+        require(
+            msg.sender == IOwnersContract(ownersContract).addressOf("Weapon"),
+            "Not weapon contract"
+        );
+        metadata[_tokenId].attackPoints = _attackPoints;
+        metadata[_tokenId].armorPoints = _armorPoints;
+        metadata[_tokenId].sellPrice = _sellPrice;
+        metadata[_tokenId].requiredExperience = _requiredExperience;
     }
 }

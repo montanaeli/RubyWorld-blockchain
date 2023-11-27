@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IERC721TokenReceiver.sol";
+import "src/interfaces/IERC721TokenReceiver.sol";
 
 contract ERC721TokenReceiver is IERC721TokenReceiver {
     event Received(

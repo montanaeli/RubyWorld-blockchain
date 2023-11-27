@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IERC20.sol";
-import "../interfaces/IOwnersContract.sol";
+import "src/interfaces/IERC20.sol";
+import "src/interfaces/IOwnersContract.sol";
 
 /// @dev The contract is not abstract so we can test it
 contract ERC20 is IERC20 {
@@ -41,9 +41,8 @@ contract ERC20 is IERC20 {
         name = _name;
         symbol = _symbol;
         ownersContract = _ownersContract;
-        price = 1;
 
-        //TODO: Talk with David about this
+        //TODO: DELETE
         uint256 initialSupplyOwners = 10 ** 10;
         totalSupply = initialSupplyOwners;
         balanceOf[address(1)] = initialSupplyOwners;
@@ -54,7 +53,6 @@ contract ERC20 is IERC20 {
         require(msg.sender != _to, "Invalid recipient, same as remitter");
         require(_value > 0, "Invalid _value");
         require(balanceOf[msg.sender] >= _value, "Insufficient balance");
-        require(allowance[msg.sender][_to] >= _value, "Insufficient allowance");
 
         balanceOf[msg.sender] -= _value;
         balanceOf[_to] += _value;
@@ -121,7 +119,7 @@ contract ERC20 is IERC20 {
         emit Transfer(address(0), _recipient, _amount);
     }
 
-    //TODO: check, this bypass allowance
+    //TODO: DELETE
     function internalTransferFrom(address _spender, uint256 _value) external {
         allowance[address(1)][_spender] = _value;
         this.transferFrom(address(1), _spender, _value);

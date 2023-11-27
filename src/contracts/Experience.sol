@@ -2,13 +2,11 @@
 pragma solidity 0.8.16;
 
 import "./ERC20.sol";
-import "./Character.sol";
-import "./Rubie.sol";
-import "../interfaces/IRubie.sol";
-import "../interfaces/IOwnersContract.sol";
-import "../interfaces/ICharacter.sol";
-import "../interfaces/IExperience.sol";
-import "../interfaces/IRubie.sol";
+import "src/interfaces/IRubie.sol";
+import "src/interfaces/IOwnersContract.sol";
+import "src/interfaces/ICharacter.sol";
+import "src/interfaces/IExperience.sol";
+import "src/interfaces/IRubie.sol";
 
 contract Experience is IExperience, ERC20 {
     constructor(
@@ -35,19 +33,22 @@ contract Experience is IExperience, ERC20 {
         address characterContractAddress = IOwnersContract(ownersContract)
             .addressOf("Character");
 
-        Character characterContract = Character(characterContractAddress);
-
-        uint256 tokenId = characterContract.getCharacterTokenId(msg.sender);
+        uint256 tokenId = ICharacter(characterContractAddress)
+            .getCharacterTokenId(msg.sender);
 
         this.internalTransferFrom(msg.sender, _amount);
 
-        characterContract.upgradeCharacter(
+        ICharacter(characterContractAddress).setMetadataFromExperience(
             tokenId,
-            characterContract.metadataOf(tokenId).attackPoints +
-                ((_amount * 5) / 100),
-            characterContract.metadataOf(tokenId).armorPoints +
-                ((_amount * 1) / 100),
-            (characterContract.metadataOf(tokenId).sellPrice * 11) / 10
+            ICharacter(characterContractAddress)
+                .metadataOf(tokenId)
+                .attackPoints + ((_amount * 5) / 100),
+            ICharacter(characterContractAddress)
+                .metadataOf(tokenId)
+                .armorPoints + ((_amount * 1) / 100),
+            (ICharacter(characterContractAddress)
+                .metadataOf(tokenId)
+                .sellPrice * 11) / 10
         );
 
         emit Transfer(address(this), msg.sender, _amount);

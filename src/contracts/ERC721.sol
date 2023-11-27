@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IERC721.sol";
-import "../interfaces/IERC721TokenReceiver.sol";
-import "../interfaces/IOwnersContract.sol";
+import "src/interfaces/IERC721.sol";
+import "src/interfaces/IERC721TokenReceiver.sol";
+import "src/interfaces/IOwnersContract.sol";
 import "./ERC721TokenReceiver.sol";
 
 abstract contract ERC721 is IERC721, ERC721TokenReceiver {
@@ -26,7 +26,7 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     uint256 public totalSupply;
     uint256 public mintPrice;
     address public ownersContract;
-    uint256 public totalFees = 0;
+    uint256 public totalFees;
 
     mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
@@ -64,6 +64,7 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         tokenURI = _tokenURI;
         ownersContract = _ownerContract;
         maxAmountPerAddress = _maxAmountPerAddress;
+        totalFees = 0;
     }
 
     function safeTransfer(
@@ -130,10 +131,29 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     }
 
     function collectFee() external {
-        require(msg.sender == ownersContract, "Not the owner");
+        require(msg.sender == ownersContract, "Not owners contract");
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        ); //no sense to do this but it's specified in "letra de obligatorio"
+
+        //TODO: check if this does not have to be balanceOf[ownersContract]
+        require(totalFees > 0, "zero balance");
         payable(msg.sender).transfer(totalFees);
         totalFees = 0;
     }
+
+    function setMintPrice(uint256 _mintPrice) external {
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
+        mintPrice = _mintPrice;
+    }
+
+    /// --------------------
+    /// OUR CODE STARTS HERE
+    /// --------------------
 
     function addTokenToAddress(address _address, uint256 _tokenId) internal {
         tokensOf[_address].push(_tokenId);
@@ -151,13 +171,5 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
                 break;
             }
         }
-    }
-
-    function setMintPrice(uint256 _mintPrice) external {
-        require(
-            IOwnersContract(ownersContract).owners(msg.sender),
-            "Not the owner"
-        );
-        mintPrice = _mintPrice;
     }
 }

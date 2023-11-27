@@ -109,7 +109,7 @@ describe("ERC20 tests", () => {
       ).to.equal(0);
     });
     it("Should return empty price", async () => {
-      expect(await erc20Contract.price()).to.equal(1);
+      expect(await erc20Contract.price()).to.equal(0);
     });
 
     it("Should return empty decimals", async () => {

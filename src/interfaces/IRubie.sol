@@ -12,4 +12,9 @@ interface IRubie is IERC20 {
     /// @dev Emit the `Transfer` event with the `_from` parameter set to zero address.
     /// @param _amount It is the amount of tokens to buy
     function buy(uint256 _amount) external payable;
+
+    /// --------------------
+    /// OUR CODE STARTS HERE
+    /// --------------------
+    function mintFromCharacter(uint256 _amount) external;
 }
