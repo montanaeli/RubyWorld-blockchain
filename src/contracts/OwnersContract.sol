@@ -33,7 +33,8 @@ contract OwnersContract is IOwnersContract {
 
     constructor(uint256 _tokenSellFreePercentage) {
         tokenSellFeePercentage = _tokenSellFreePercentage;
-        ownerIndex = 0;
+        ownersList[ownerIndex] = msg.sender;
+        ownerIndex++;
     }
 
     function owners(
