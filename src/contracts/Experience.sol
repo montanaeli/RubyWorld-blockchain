@@ -24,7 +24,7 @@ contract Experience is IExperience, ERC20 {
             "Insufficient balance"
         );
 
-        //TODO: Not so sure how to bypass this
+        //TODO: 1. This is probably Rubie allowance, we have to make .approve(experienceContract, _amount) before calling buy(_amount) in the tests
         // require(
         //     allowance[address(this)][msg.sender] >= _amount,
         //     "Insufficient allowance"
@@ -36,6 +36,7 @@ contract Experience is IExperience, ERC20 {
         uint256 tokenId = ICharacter(characterContractAddress)
             .getCharacterTokenId(msg.sender);
 
+        //TODO: 2. Change for common transferFrom() function after fixing 1.
         this.internalTransferFrom(msg.sender, _amount);
 
         ICharacter(characterContractAddress).setMetadataFromExperience(

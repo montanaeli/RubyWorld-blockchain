@@ -15,11 +15,14 @@ module.exports = {
     artifacts: "./artifacts",
   },
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
     sepolia: {
       chainId: 11155111,
       timeout: 20000,
       gasPrice: 8000000000,
-      blockGasLimit: 60000000,
+      blockGasLimit: 60000000000,
       gas: "auto",
       name: "Sepolia",
       url: process.env.SEPOLIA_ACCESSPOINT_URL,

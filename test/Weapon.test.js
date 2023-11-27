@@ -13,7 +13,7 @@ const experienceContractPath = "./src/contracts/Experience.sol:Experience";
 const DECIMAL_FACTOR = 10 ** 18;
 
 const confirmations_number = 1;
-const zeroAddress = "0x0000000000000000000000000000000000000000";
+const zeroAddress = ethers.constants.AddressZero;
 let ownersContractInstance;
 let weaponContractInstance;
 let characterContractInstance;
@@ -67,7 +67,7 @@ describe("Weapon Tests", () => {
       tokenSellFeePercentage * DECIMAL_FACTOR
     );
 
-    ownersContractInstance.addOwner(signer.address);
+    await ownersContractInstance.addOwner(signer.address);
 
     rubieContractInstance = await rubieContractFactory.deploy(
       rubieName,

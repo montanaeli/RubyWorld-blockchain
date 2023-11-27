@@ -29,9 +29,11 @@ describe("Experience tests", () => {
 
     ownersContract = await ownersContractFactory.deploy(10);
 
-    [signer, account1, account2].forEach((account) => {
-      ownersContract.addOwner(account.address);
-    });
+    const arr = [signer, account1, account2];
+
+    for (let i = 0; i < arr.length; i++) {
+      await ownersContract.addOwner(arr[i].address);
+    }
 
     ownerAddress = signer.address;
 
@@ -65,36 +67,29 @@ describe("Experience tests", () => {
     characterContract = await characterContractFactory.deploy(
       "Character",
       "cha",
-      "character-contract",
+      "a",
       ownersContract.address
     );
 
-    ownersContract.addContract("Character", characterContract.address);
-    ownersContract.addContract("Rubie", rubieContract.address);
-    ownersContract.addContract("Experience", experienceContract.address);
+    await ownersContract.addContract("Character", characterContract.address);
+    await ownersContract.addContract("Rubie", rubieContract.address);
+    await ownersContract.addContract("Experience", experienceContract.address);
   });
 
   describe("Method buy", () => {
     it("Should buy experience", async () => {
       await characterContract.safeMint("MyCharacter", { value: 1000 });
-
       const amount = 100;
       const tokenId = await characterContract.getCharacterTokenId(
         signer.address
       );
-
       expect(await characterContract.ownerOf(tokenId)).to.equal(signer.address);
-
       let oldMetadata = await characterContract.metadataOf(tokenId);
-
       await experienceContract.buy(amount);
-
       expect(await experienceContract.balanceOf(signer.address)).to.equal(
         amount
       );
-
       let newMetadata = await characterContract.metadataOf(tokenId);
-
       expect(newMetadata.attackPoints).to.equal(
         oldMetadata.attackPoints.add((amount * 5) / 100)
       );

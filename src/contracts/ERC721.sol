@@ -58,7 +58,8 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
             "_name, _symbol and _tokenURI are mandatory parameters"
         );
         require(bytes(_symbol).length == 3, "Invalid symbol");
-        require(ownersContract != address(0), "Invalid address");
+        require(_ownerContract != address(0), "Invalid address");
+
         name = _name;
         symbol = _symbol;
         tokenURI = _tokenURI;
