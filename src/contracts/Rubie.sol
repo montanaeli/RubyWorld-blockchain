@@ -15,10 +15,10 @@ contract Rubie is IRubie, ERC20 {
     ) ERC20(_name, _symbol, _ownersContract) {}
 
     function buy(uint256 _amount) external payable {
-        require(msg.value >= _amount, "Insufficient ether");
+        require(msg.value >= (_amount / price), "Insufficient ether");
 
-        if (msg.value > _amount) {
-            payable(msg.sender).transfer(msg.value - _amount);
+        if (msg.value > (_amount / price)) {
+            payable(msg.sender).transfer(msg.value - (_amount / price));
         }
 
         balanceOf[msg.sender] += _amount;

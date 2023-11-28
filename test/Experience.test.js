@@ -75,7 +75,7 @@ describe("Experience tests", () => {
     await ownersContract.addContract("Rubie", rubieContract.address);
     await ownersContract.addContract("Experience", experienceContract.address);
 
-    await experienceContract.setPrice(1);
+    await rubieContract.setPrice(1);
   });
 
   describe("Method buy", () => {
