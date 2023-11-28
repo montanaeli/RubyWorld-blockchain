@@ -77,6 +77,7 @@ contract Character is ICharacter, ERC721 {
             IOwnersContract(ownersContract).owners(msg.sender),
             "Not the owner"
         );
+
         Metadata memory newCharacterMetadata = Metadata({
             name: "Hero name",
             attackPoints: _attackPoints,
@@ -152,7 +153,12 @@ contract Character is ICharacter, ERC721 {
     }
 
     function setMintingPrice(uint256 _mintPrice) external {
-        this.setMintPrice(_mintPrice);
+        require(
+            IOwnersContract(ownersContract).owners(msg.sender),
+            "Not the owner"
+        );
+        require(_mintPrice > 0, "Invalid _mintPrice");
+        mintPrice = _mintPrice;
     }
 
     function setOnSale(

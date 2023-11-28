@@ -25,7 +25,7 @@ contract ERC721TokenReceiver is IERC721TokenReceiver {
     }
 
     function isERC721TokenReceiver(address _to, uint256 _tokenId) external {
-        //TODO: Check this, i change it but i'm not sure
+        //TODO: fix to run this only in Smart Contracts
         require(_to != address(0), "Invalid contract");
         bytes4 MAGIC_NUMBER = 0x150b7a02;
         bytes memory _data;

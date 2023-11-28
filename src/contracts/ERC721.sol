@@ -94,10 +94,13 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         uint256 _tokenId
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
         // TODO: Remains to implement the penultimum DEV requirement
-        require(_tokenId < totalSupply && _tokenId > 0, "Invalid tokenId");
+        require(_tokenId <= totalSupply && _tokenId > 0, "Invalid tokenId");
         require(_to != address(0), "Invalid address");
         require(
-            _from == msg.sender || allowance[_tokenId] == msg.sender,
+            _from == msg.sender ||
+                allowance[_tokenId] == msg.sender ||
+                IOwnersContract(ownersContract).addressOf("Character") ==
+                msg.sender,
             "Not the owner"
         );
         require(
