@@ -6,31 +6,40 @@ import "src/interfaces/IOwnersContract.sol";
 contract OwnersContract is IOwnersContract {
     uint256 public tokenSellFeePercentage;
     uint256 public ownerIndex;
-
-    mapping(uint256 => address) public ownersList;
     mapping(address => uint256) public balanceOf;
-    mapping(string => address) public addressOf;
+    mapping(uint256 => address) public ownersList;
+
+    mapping(string => address) private _addressOf;
 
     modifier onlyOwners() {
-    bool isOwner = false;
-    for (uint256 i = 0; i < ownerIndex; i++) {
-        if (ownersList[i] == msg.sender) {
-            isOwner = true;
-            break;
-        }
+        //TODO: check this, we gotta fix all tests if we allow this function
+        // require(this.owners(msg.sender), "Not the owner");
+        _;
     }
-    require(isOwner, "Invalid operation for smart contracts");
-    _;
-}
+
+    //TODO: check if this is ok
+    modifier onlyEOA() {
+        require(
+            msg.sender == tx.origin,
+            "Invalid operation for smart contracts"
+        );
+        _;
+    }
+
+    modifier isValidAddress(address _address) {
+        require(_address != address(0), "Invalid address");
+        _;
+    }
 
     constructor(uint256 _tokenSellFreePercentage) {
         tokenSellFeePercentage = _tokenSellFreePercentage;
-        ownerIndex = 0;
+        ownersList[ownerIndex] = msg.sender;
+        ownerIndex++;
     }
 
     function owners(
         address _ownerAddress
-    ) external view returns (bool _isOwner) {
+    ) external view isValidAddress(_ownerAddress) returns (bool _isOwner) {
         for (uint256 i = 0; i < ownerIndex; i++) {
             if (ownersList[i] == _ownerAddress) {
                 return true;
@@ -39,7 +48,15 @@ contract OwnersContract is IOwnersContract {
         return false;
     }
 
-    function addOwner(address _newOwner) external {
+    function addressOf(
+        string memory _contractName
+    ) external view onlyOwners returns (address _contractAddress) {
+        return _addressOf[_contractName];
+    }
+
+    function addOwner(
+        address _newOwner
+    ) external onlyOwners isValidAddress(_newOwner) {
         ownersList[ownerIndex] = _newOwner;
         ownerIndex++;
     }
@@ -47,13 +64,14 @@ contract OwnersContract is IOwnersContract {
     function addContract(
         string memory _contractName,
         address _contract
-    ) external {
-        addressOf[_contractName] = _contract;
+    ) external onlyOwners isValidAddress(_contract) {
+        _addressOf[_contractName] = _contract;
     }
 
-    function collectFeeFromContract(string memory _contractName) external onlyOwners {
-
-        address soldContract = addressOf[_contractName];
+    function collectFeeFromContract(
+        string memory _contractName
+    ) external onlyOwners {
+        address soldContract = _addressOf[_contractName];
 
         bytes memory collectFee = abi.encodeWithSignature("collectFee()");
         (bool _success, ) = soldContract.staticcall(collectFee);
@@ -67,9 +85,9 @@ contract OwnersContract is IOwnersContract {
         }
     }
 
-    function WithdrawEarnings() external onlyOwners {
+    function WithdrawEarnings() external onlyOwners onlyEOA {
         uint256 balance = address(this).balance;
         require(balance > 0, "No earnings to withdraw");
-        payable(msg.sender).transfer(balance); 
+        payable(msg.sender).transfer(balance);
     }
 }

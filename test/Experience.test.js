@@ -8,12 +8,14 @@ const { expect } = chai;
 const zeroAddress = ethers.constants.AddressZero;
 const contractPath = "src/contracts/Experience.sol:Experience";
 
-const name = "Experience Contract";
+const name = "Experience";
 const symbol = "exp";
 
 let ownerAddress;
 let ownersContract;
 let experienceContract;
+let rubieContract;
+let characterContract;
 
 describe("Experience tests", () => {
   before(async () => {
@@ -27,9 +29,11 @@ describe("Experience tests", () => {
 
     ownersContract = await ownersContractFactory.deploy(10);
 
-    [signer, account1, account2].forEach((account) => {
-      ownersContract.addOwner(account.address);
-    });
+    const arr = [signer, account1, account2];
+
+    for (let i = 0; i < arr.length; i++) {
+      await ownersContract.addOwner(arr[i].address);
+    }
 
     ownerAddress = signer.address;
 
@@ -43,14 +47,79 @@ describe("Experience tests", () => {
       symbol,
       ownersContract.address
     );
+
+    const rubieContractFactory = await ethers.getContractFactory(
+      "src/contracts/Rubie.sol:Rubie",
+      signer
+    );
+
+    rubieContract = await rubieContractFactory.deploy(
+      "Rubie",
+      "rub",
+      ownersContract.address
+    );
+
+    const characterContractFactory = await ethers.getContractFactory(
+      "src/contracts/Character.sol:Character",
+      signer
+    );
+
+    characterContract = await characterContractFactory.deploy(
+      "Character",
+      "cha",
+      "a",
+      ownersContract.address
+    );
+
+    await ownersContract.addContract("Character", characterContract.address);
+    await ownersContract.addContract("Rubie", rubieContract.address);
+    await ownersContract.addContract("Experience", experienceContract.address);
+
+    await rubieContract.setPrice(1);
   });
 
   describe("Method buy", () => {
-    it("Should buy experience", async () => {});
-  });
-  describe("No more tests to perform, everything covered inside ERC20.test.js because Experience extends from ERC20", () => {
-    it("Should be true", async () => {
-      expect(true).to.equal(true);
+    it("Should buy experience and upgrade character", async () => {
+      await characterContract.safeMint("MyCharacter", { value: 1000 });
+      const tokenId = await characterContract.getCharacterTokenId(
+        signer.address
+      );
+      expect(await characterContract.ownerOf(tokenId)).to.equal(signer.address);
+      const oldMetadata = await characterContract.metadataOf(tokenId);
+      const amount = 100;
+      await rubieContract.buy(amount, { value: amount });
+      await rubieContract.approve(experienceContract.address, amount);
+      await experienceContract.buy(amount);
+      expect(await experienceContract.balanceOf(signer.address)).to.equal(
+        amount
+      );
+      const newMetadata = await characterContract.metadataOf(tokenId);
+      expect(newMetadata.attackPoints).to.equal(
+        oldMetadata.attackPoints.add((amount * 5) / 100)
+      );
+      expect(newMetadata.armorPoints).to.equal(
+        oldMetadata.armorPoints.add((amount * 1) / 100)
+      );
+      expect(newMetadata.sellPrice).to.equal(
+        oldMetadata.sellPrice.mul(11).div(10)
+      );
+      expect(newMetadata.requiredExperience).to.equal(
+        oldMetadata.requiredExperience.add(amount)
+      );
+
+      it("Should buy experience and do not upgrade character", async () => {
+        const amount = 100;
+        await rubieContract.buy(amount, { value: amount });
+        await rubieContract.approve(experienceContract.address, amount);
+        await experienceContract.buy(amount);
+        expect(await experienceContract.balanceOf(signer.address)).to.equal(
+          amount
+        );
+        expect(await characterContract.hasCharacter(signer.address)).to.equal(
+          false
+        );
+      });
     });
+    it("Everything else is tested in Rubie.tests.js as both classes extends from ERC20", async () => {});
   });
 });

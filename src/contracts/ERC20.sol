@@ -1,10 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IERC20.sol";
-import "../interfaces/IOwnersContract.sol";
+import "src/interfaces/IERC20.sol";
+import "src/interfaces/IOwnersContract.sol";
 
-contract ERC20 is IERC20 {
+/// @dev The contract is not abstract so we can test it
+abstract contract ERC20 is IERC20 {
     /// STATE VARIABLES
     string public name;
     string public symbol;
@@ -29,13 +30,6 @@ contract ERC20 is IERC20 {
         uint256 _value
     );
 
-    /// @notice Trigger on any successful call to `burn` method
-    event Burn(
-        address indexed _from,
-        address indexed _commandedBy,
-        uint256 _value
-    );
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -54,7 +48,6 @@ contract ERC20 is IERC20 {
         require(msg.sender != _to, "Invalid recipient, same as remitter");
         require(_value > 0, "Invalid _value");
         require(balanceOf[msg.sender] >= _value, "Insufficient balance");
-        require(allowance[msg.sender][_to] >= _value, "Insufficient allowance");
 
         balanceOf[msg.sender] -= _value;
         balanceOf[_to] += _value;
@@ -73,9 +66,10 @@ contract ERC20 is IERC20 {
         require(_from != _to, "Invalid recipient, same as remitter");
         require(_value > 0, "Invalid _value");
         require(balanceOf[_from] >= _value, "Insufficient balance");
-
-        //TODO: Check what it means by "Throw if `msg.sender` is not the current owner or an approved address with permission to spend the balance of the '_from' account"
-        require(allowance[_from][_to] >= _value, "Insufficent allowance");
+        require(
+            msg.sender == _from || allowance[_from][_to] >= _value,
+            "Insufficent allowance"
+        );
 
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;

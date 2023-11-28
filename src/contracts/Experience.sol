@@ -2,13 +2,11 @@
 pragma solidity 0.8.16;
 
 import "./ERC20.sol";
-import "./OwnersContract.sol";
-import "./Character.sol";
-import "./Rubie.sol";
-import "../interfaces/IRubie.sol";
-import "../interfaces/ICharacter.sol";
-import "../interfaces/IExperience.sol";
-import "../interfaces/IRubie.sol";
+import "src/interfaces/IRubie.sol";
+import "src/interfaces/IOwnersContract.sol";
+import "src/interfaces/ICharacter.sol";
+import "src/interfaces/IExperience.sol";
+import "src/interfaces/IRubie.sol";
 
 contract Experience is IExperience, ERC20 {
     constructor(
@@ -18,40 +16,56 @@ contract Experience is IExperience, ERC20 {
     ) ERC20(_name, _symbol, _ownersContract) {}
 
     function buy(uint256 _amount) external {
-        address rubieContractAddress = OwnersContract(ownersContract).addressOf(
-            "Rubie"
-        );
+        address rubieContractAddress = IOwnersContract(ownersContract)
+            .addressOf("Rubie");
 
         require(
-            Rubie(rubieContractAddress).balanceOf(msg.sender) >= _amount,
+            IRubie(rubieContractAddress).balanceOf(msg.sender) >= _amount,
             "Insufficient balance"
         );
 
         require(
-            this.allowance(msg.sender, address(this)) >= _amount,
+            IRubie(rubieContractAddress).allowance(msg.sender, address(this)) >=
+                _amount,
             "Insufficient allowance"
         );
 
-        address characterContractAddress = OwnersContract(ownersContract)
+        IRubie(rubieContractAddress).transferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
+
+        address characterContractAddress = IOwnersContract(ownersContract)
             .addressOf("Character");
 
-        Character characterContract = Character(characterContractAddress);
-
-        uint256[] memory tokens = characterContract.getTokensOf(msg.sender);
-
-        require(tokens.length == 0, "No character found");
-
-        //TODO: Check with the team, this is wrong
-        uint256 tokenId = tokens[0];
-
-        characterContract.upgradeCharacter(
-            tokenId,
-            characterContract.metadataOf(tokenId).attackPoints +
-                ((_amount * 5) / 100),
-            characterContract.metadataOf(tokenId).armorPoints +
-                ((_amount * 1) / 100),
-            (characterContract.metadataOf(tokenId).sellPrice * 11) / 10
+        bool hasCharacter = ICharacter(characterContractAddress).hasCharacter(
+            msg.sender
         );
+
+        if (hasCharacter) {
+            uint256 tokenId = ICharacter(characterContractAddress)
+                .getCharacterTokenId(msg.sender);
+
+            ICharacter(characterContractAddress).setMetadataFromExperience(
+                tokenId,
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .attackPoints + ((_amount * 5) / 100),
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .armorPoints + ((_amount * 1) / 100),
+                (ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .sellPrice * 11) / 10,
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .requiredExperience + _amount
+            );
+        }
+
+        totalSupply += _amount;
+        balanceOf[msg.sender] += _amount;
 
         emit Transfer(address(this), msg.sender, _amount);
     }

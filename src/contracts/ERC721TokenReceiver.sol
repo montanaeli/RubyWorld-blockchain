@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import "../interfaces/IERC721TokenReceiver.sol";
+import "src/interfaces/IERC721TokenReceiver.sol";
 
 contract ERC721TokenReceiver is IERC721TokenReceiver {
     event Received(
@@ -25,7 +25,8 @@ contract ERC721TokenReceiver is IERC721TokenReceiver {
     }
 
     function isERC721TokenReceiver(address _to, uint256 _tokenId) external {
-        require(_to.code.length > 0, "Invalid contract");
+        //TODO: fix to run this only in Smart Contracts
+        require(_to != address(0), "Invalid contract");
         bytes4 MAGIC_NUMBER = 0x150b7a02;
         bytes memory _data;
         bytes4 result = this.onERC721Received(

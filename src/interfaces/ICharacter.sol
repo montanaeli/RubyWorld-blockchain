@@ -99,4 +99,34 @@ interface ICharacter is IERC721 {
     /// @notice Set a character's onSale property to true to allow the sell of the character. To false otherwise.
     /// @dev Revert if the tokenId does not exist with "Invalid tokenId"
     function setOnSale(uint256 _tokenId, bool _onSale) external;
+
+    /// @notice Set mint price
+    function setMintingPrice(uint256 _newPrice) external;
+
+    /// --------------------
+    /// OUR CODE STARTS HERE
+    /// --------------------
+    function hasCharacter(
+        address _owner
+    ) external view returns (bool _hasCharacter);
+
+    function getCharacterTokenId(
+        address _owner
+    ) external view returns (uint256 _tokenId);
+
+    function setMetadataFromExperience(
+        uint256 _tokenId,
+        uint256 _attackPoints,
+        uint256 _armorPoints,
+        uint256 _sellPrice,
+        uint256 _requiredExperience
+    ) external;
+
+    function setMetadataFromWeapon(
+        uint256 _tokenId,
+        uint256 _attackPoints,
+        uint256 _armorPoints,
+        uint256 _sellPrice,
+        uint256 _requiredExperience
+    ) external;
 }
