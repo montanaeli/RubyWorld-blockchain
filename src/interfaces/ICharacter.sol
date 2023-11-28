@@ -106,6 +106,10 @@ interface ICharacter is IERC721 {
     /// --------------------
     /// OUR CODE STARTS HERE
     /// --------------------
+    function hasCharacter(
+        address _owner
+    ) external view returns (bool _hasCharacter);
+
     function getCharacterTokenId(
         address _owner
     ) external view returns (uint256 _tokenId);
@@ -114,7 +118,8 @@ interface ICharacter is IERC721 {
         uint256 _tokenId,
         uint256 _attackPoints,
         uint256 _armorPoints,
-        uint256 _sellPrice
+        uint256 _sellPrice,
+        uint256 _requiredExperience
     ) external;
 
     function setMetadataFromWeapon(

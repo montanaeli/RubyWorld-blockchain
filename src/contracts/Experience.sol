@@ -24,33 +24,48 @@ contract Experience is IExperience, ERC20 {
             "Insufficient balance"
         );
 
-        //TODO: 1. This is probably Rubie allowance, we have to make .approve(experienceContract, _amount) before calling buy(_amount) in the tests
-        // require(
-        //     allowance[address(this)][msg.sender] >= _amount,
-        //     "Insufficient allowance"
-        // );
+        require(
+            IRubie(rubieContractAddress).allowance(msg.sender, address(this)) >=
+                _amount,
+            "Insufficient allowance"
+        );
+
+        IRubie(rubieContractAddress).transferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
 
         address characterContractAddress = IOwnersContract(ownersContract)
             .addressOf("Character");
 
-        uint256 tokenId = ICharacter(characterContractAddress)
-            .getCharacterTokenId(msg.sender);
-
-        //TODO: 2. Change for common transferFrom() function after fixing 1.
-        this.internalTransferFrom(msg.sender, _amount);
-
-        ICharacter(characterContractAddress).setMetadataFromExperience(
-            tokenId,
-            ICharacter(characterContractAddress)
-                .metadataOf(tokenId)
-                .attackPoints + ((_amount * 5) / 100),
-            ICharacter(characterContractAddress)
-                .metadataOf(tokenId)
-                .armorPoints + ((_amount * 1) / 100),
-            (ICharacter(characterContractAddress)
-                .metadataOf(tokenId)
-                .sellPrice * 11) / 10
+        bool hasCharacter = ICharacter(characterContractAddress).hasCharacter(
+            msg.sender
         );
+
+        if (hasCharacter) {
+            uint256 tokenId = ICharacter(characterContractAddress)
+                .getCharacterTokenId(msg.sender);
+
+            ICharacter(characterContractAddress).setMetadataFromExperience(
+                tokenId,
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .attackPoints + ((_amount * 5) / 100),
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .armorPoints + ((_amount * 1) / 100),
+                (ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .sellPrice * 11) / 10,
+                ICharacter(characterContractAddress)
+                    .metadataOf(tokenId)
+                    .requiredExperience + _amount
+            );
+        }
+
+        totalSupply += _amount;
+        balanceOf[msg.sender] += _amount;
 
         emit Transfer(address(this), msg.sender, _amount);
     }

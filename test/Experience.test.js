@@ -74,22 +74,26 @@ describe("Experience tests", () => {
     await ownersContract.addContract("Character", characterContract.address);
     await ownersContract.addContract("Rubie", rubieContract.address);
     await ownersContract.addContract("Experience", experienceContract.address);
+
+    await experienceContract.setPrice(1);
   });
 
   describe("Method buy", () => {
-    it("Should buy experience", async () => {
+    it("Should buy experience and upgrade character", async () => {
       await characterContract.safeMint("MyCharacter", { value: 1000 });
-      const amount = 100;
       const tokenId = await characterContract.getCharacterTokenId(
         signer.address
       );
       expect(await characterContract.ownerOf(tokenId)).to.equal(signer.address);
-      let oldMetadata = await characterContract.metadataOf(tokenId);
+      const oldMetadata = await characterContract.metadataOf(tokenId);
+      const amount = 100;
+      await rubieContract.buy(amount, { value: amount });
+      await rubieContract.approve(experienceContract.address, amount);
       await experienceContract.buy(amount);
       expect(await experienceContract.balanceOf(signer.address)).to.equal(
         amount
       );
-      let newMetadata = await characterContract.metadataOf(tokenId);
+      const newMetadata = await characterContract.metadataOf(tokenId);
       expect(newMetadata.attackPoints).to.equal(
         oldMetadata.attackPoints.add((amount * 5) / 100)
       );
@@ -99,14 +103,23 @@ describe("Experience tests", () => {
       expect(newMetadata.sellPrice).to.equal(
         oldMetadata.sellPrice.mul(11).div(10)
       );
+      expect(newMetadata.requiredExperience).to.equal(
+        oldMetadata.requiredExperience.add(amount)
+      );
+
+      it("Should buy experience and do not upgrade character", async () => {
+        const amount = 100;
+        await rubieContract.buy(amount, { value: amount });
+        await rubieContract.approve(experienceContract.address, amount);
+        await experienceContract.buy(amount);
+        expect(await experienceContract.balanceOf(signer.address)).to.equal(
+          amount
+        );
+        expect(await characterContract.hasCharacter(signer.address)).to.equal(
+          false
+        );
+      });
     });
-    it("Missing reverts", async () => {
-      //TODO: Add missing reverts
-    });
-  });
-  describe("No more tests to perform, everything covered inside ERC20.test.js because Experience extends from ERC20", () => {
-    it("Should be true", async () => {
-      expect(true).to.equal(true);
-    });
+    it("Everything else is tested in Rubie.tests.js as both classes extends from ERC20", async () => {});
   });
 });

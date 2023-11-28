@@ -5,7 +5,7 @@ import "src/interfaces/IERC20.sol";
 import "src/interfaces/IOwnersContract.sol";
 
 /// @dev The contract is not abstract so we can test it
-contract ERC20 is IERC20 {
+abstract contract ERC20 is IERC20 {
     /// STATE VARIABLES
     string public name;
     string public symbol;
@@ -41,11 +41,6 @@ contract ERC20 is IERC20 {
         name = _name;
         symbol = _symbol;
         ownersContract = _ownersContract;
-
-        //TODO: DELETE
-        uint256 initialSupplyOwners = 10 ** 10;
-        totalSupply = initialSupplyOwners;
-        balanceOf[address(1)] = initialSupplyOwners;
     }
 
     function transfer(address _to, uint256 _value) external returns (bool) {
@@ -117,12 +112,5 @@ contract ERC20 is IERC20 {
         balanceOf[_recipient] += _amount;
 
         emit Transfer(address(0), _recipient, _amount);
-    }
-
-    //TODO: DELETE
-    function internalTransferFrom(address _spender, uint256 _value) external {
-        allowance[address(1)][_spender] = _value;
-        this.transferFrom(address(1), _spender, _value);
-        allowance[address(1)][_spender] = 0;
     }
 }

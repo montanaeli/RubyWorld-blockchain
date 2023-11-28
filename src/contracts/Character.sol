@@ -30,29 +30,6 @@ contract Character is ICharacter, ERC721 {
         return metadata[_tokenId];
     }
 
-    function getCharacterTokenId(
-        address _owner
-    ) external view isValidAddress(_owner) returns (uint256 _tokens) {
-        require(tokensOf[_owner].length > 0, "No character found");
-        return tokensOf[_owner][0];
-    }
-
-    function setMetadataFromExperience(
-        uint256 _tokenId,
-        uint256 _attackPoints,
-        uint256 _armorPoints,
-        uint256 _sellPrice
-    ) external isValidTokenId(_tokenId) {
-        require(
-            msg.sender ==
-                IOwnersContract(ownersContract).addressOf("Experience"),
-            "Not experience contract"
-        );
-        metadata[_tokenId].attackPoints = _attackPoints;
-        metadata[_tokenId].armorPoints = _armorPoints;
-        metadata[_tokenId].sellPrice = _sellPrice;
-    }
-
     function weapon(
         uint256 _weaponIndex
     ) external view isValidTokenId(_weaponIndex) returns (uint256 _weapon) {
@@ -196,6 +173,35 @@ contract Character is ICharacter, ERC721 {
         require(
             msg.sender == IOwnersContract(ownersContract).addressOf("Weapon"),
             "Not weapon contract"
+        );
+        metadata[_tokenId].attackPoints = _attackPoints;
+        metadata[_tokenId].armorPoints = _armorPoints;
+        metadata[_tokenId].sellPrice = _sellPrice;
+        metadata[_tokenId].requiredExperience = _requiredExperience;
+    }
+
+    function hasCharacter(address _owner) external view returns (bool _has) {
+        return tokensOf[_owner].length > 0;
+    }
+
+    function getCharacterTokenId(
+        address _owner
+    ) external view isValidAddress(_owner) returns (uint256 _tokens) {
+        require(this.hasCharacter(_owner), "No character found");
+        return tokensOf[_owner][0];
+    }
+
+    function setMetadataFromExperience(
+        uint256 _tokenId,
+        uint256 _attackPoints,
+        uint256 _armorPoints,
+        uint256 _sellPrice,
+        uint256 _requiredExperience
+    ) external isValidTokenId(_tokenId) {
+        require(
+            msg.sender ==
+                IOwnersContract(ownersContract).addressOf("Experience"),
+            "Not experience contract"
         );
         metadata[_tokenId].attackPoints = _attackPoints;
         metadata[_tokenId].armorPoints = _armorPoints;
