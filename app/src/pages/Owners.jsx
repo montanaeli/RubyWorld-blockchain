@@ -1,9 +1,17 @@
 import { labelMap } from "./constants";
+import { useContext } from "../context";
 
 export const Owners = () => {
+  const { data } = useContext();
+
+  if (!data) return null;
+
+  const { Owners: args } = data;
+
   const props = {
-    ownerIndex: 3,
-    tokenSellFeePercentage: 5,
+    ownerIndex: args.ownerIndex,
+    tokenSellFeePercentage: args.tokenSellFeePercentage,
+    balance: args.balance,
   }
   return (
     <section>

@@ -9,4 +9,5 @@ export const labelMap = {
   mintPrice: "Mint Price",
   tokenSellFeePercentage: "Token Sell Fee Percentage",
   ownerIndex: "Owner Index",
+  balance: "Balance",
 };
