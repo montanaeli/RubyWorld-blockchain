@@ -1,4 +1,5 @@
 import { labelMap } from "./constants";
+import { EContract } from "../constants";
 import { useContext } from "../context";
 
 export const Experience = () => {
@@ -7,7 +8,7 @@ export const Experience = () => {
 
   if (!data) return null;
 
-  const { Experience: args } = data
+  const { [EContract.Experience]: args } = data
 
   const obj = {
     name: args.name,

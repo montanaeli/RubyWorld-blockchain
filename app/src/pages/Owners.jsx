@@ -1,4 +1,5 @@
 import { labelMap } from "./constants";
+import { EContract } from "../constants";
 import { useContext } from "../context";
 
 export const Owners = () => {
@@ -6,7 +7,7 @@ export const Owners = () => {
 
   if (!data) return null;
 
-  const { Owners: args } = data;
+  const { [EContract.Owners]: args } = data;
 
   const props = {
     ownerIndex: args.ownerIndex,

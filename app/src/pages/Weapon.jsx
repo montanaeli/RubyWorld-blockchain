@@ -1,5 +1,6 @@
 import { labelMap } from "./constants";
 import { useContext } from "../context";
+import { EContract } from "../constants";
 
 
 export const Weapon = () => {
@@ -7,7 +8,7 @@ export const Weapon = () => {
 
   if (!data) return null;
 
-  const { Weapon: args } = data
+  const { [EContract.Weapon]: args } = data
 
   const obj = {
     name: args.name,

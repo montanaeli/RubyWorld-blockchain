@@ -1,13 +1,14 @@
 import { labelMap } from "./constants";
 import { useContext } from "../context";
 import { Button } from "../components";
+import { EContract } from "../constants";
 
 export const Character = () => {
   const { data, contracts } = useContext();
 
   if (!data || !contracts) return null;
 
-  const { Character: args } = data
+  const { [EContract.Character]: args } = data
 
   const obj = {
     name: args.name,

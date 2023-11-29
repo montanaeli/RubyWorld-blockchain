@@ -1,5 +1,6 @@
 import { labelMap } from "./constants";
 import { useContext } from "../context";
+import { EContract } from "../constants";
 
 export const Rubie = () => {
 
@@ -7,7 +8,7 @@ export const Rubie = () => {
 
   if (!data) return null;
 
-  const { Rubie: args } = data
+  const { [EContract.Rubie]: args } = data
 
 
   const obj = {
