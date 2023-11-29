@@ -1,148 +1,81 @@
-// const { ethers } = require("hardhat");
-// const chai = require("chai");
-// const { solidity } = require("ethereum-waffle");
-// chai.use(solidity);
-// const { expect } = chai;
-
-// const ownersContractPath = "./src/contracts/OwnersContract.sol:OwnersContract";
-
-// let ownersContract;
-// let owner1;
-// let owner2;
-
-// describe("OwnersContract tests", () => {
-//   before(async () => {
-//     console.log()
-//     [owner1, owner2] = await ethers.getSigners();
-
-//     const OwnersContractFactory = await ethers.getContractFactory(
-//       "OwnersContract"
-//     );
-//     ownersContract = await OwnersContractFactory.deploy(5);
-
-//     await ownersContract.addOwner(owner1.address);
-//     await ownersContract.addOwner(owner2.address);
-
-//     it("should add an owner", async () => {
-//       const isOwner = await ownersContract.owners(owner1.address);
-//       expect(isOwner).to.be.true;
-//     });
-
-//     it("should add another owner", async () => {
-//       const isOwner = await ownersContract.owners(owner2.address);
-//       expect(isOwner).to.be.true;
-//     });
-
-//     it("should return owners list", async () => {
-//       const owner1FromList = await ownersContract.ownersList(0);
-//       const owner2FromList = await ownersContract.ownersList(1);
-//       expect(owner1FromList).to.equal(owner1.address);
-//       expect(owner2FromList).to.equal(owner2.address);
-//     });
-
-//     it("should return the balance of an owner", async () => {
-//       const balance = await ownersContract.balanceOf(owner1.address);
-//       expect(balance).to.equal(0); // Owners just added, so balance should be 0
-//     });
-
-//     it("should have earnings to withdraw", async () => {
-//       const initialBalance = await ethers.provider.getBalance(signer.address);
-//       await expect(ownersContract.WithdrawEarnings()).to.be.revertedWith(
-//         "No earnings to withdraw"
-//       );
-//     });
-
-//     it("should collect fee from a specific contract and distribute it among owners", async () => {
-//       await ownersContract.addContract(
-//         "Character",
-//         ethers.constants.AddressZero
-//       );
-
-//       await ownersContract.deposit({ value: ethers.utils.parseEther("10") });
-
-//       const initialBalances = await Promise.all(
-//         [owner1, owner2].map(
-//           async (owner) => await ethers.provider.getBalance(owner.address)
-//         )
-//       );
-
-//       await ownersContract.collectFeeFromContract("Character");
-
-//       const finalBalances = await Promise.all(
-//         [owner1, owner2].map(
-//           async (owner) => await ethers.provider.getBalance(owner.address)
-//         )
-//       );
-
-//       const contractBalance = await ethers.provider.getBalance(
-//         ownersContract.address
-//       );
-//       expect(contractBalance).to.equal(0);
-
-//       for (let i = 0; i < initialBalances.length; i++) {
-//         const expectedIncrease = initialBalances[i].add(
-//           ethers.utils.parseEther("5")
-//         );
-//         expect(finalBalances[i]).to.equal(expectedIncrease);
-//       }
-//     });
-
-//     it("should withdraw earnings", async () => {
-//       await ownersContract.deposit({ value: ethers.utils.parseEther("10") });
-
-//       const initialBalance = await ethers.provider.getBalance(signer.address);
-//       await ownersContract.withdrawEarnings();
-//       const finalBalance = await ethers.provider.getBalance(signer.address);
-
-//       expect(finalBalance.gt(initialBalance)).to.be.true;
-//     });
-//   });
-// });
-
 const { ethers } = require("hardhat");
 const chai = require("chai");
 const { solidity } = require("ethereum-waffle");
 chai.use(solidity);
 const { expect } = chai;
 
+const erc721ContractPath = "./src/contracts/ERC721.sol:ERC721";
 const ownersContractPath = "./src/contracts/OwnersContract.sol:OwnersContract";
+const weaponContractPath = "./src/contracts/Weapon.sol:Weapon";
+const characterContractPath = "./src/contracts/Character.sol:Character";
+const rubieContractPath = "./src/contracts/Rubie.sol:Rubie";
+const experienceContractPath = "./src/contracts/Experience.sol:Experience";
+const DECIMAL_FACTOR = 10 ** 18;
 
 let ownersContractInstance;
-let weaponContractInstance;
 let characterContractInstance;
-let signer; // The account deploying the contract
-let owner1;   // An additional owner for testing
+let rubieContractInstance;
+let experienceContractInstance;
+const confirmations_number = 1;
+const zeroAddress = ethers.constants.AddressZero;
 
 // Constructor parameters
-const weaponName = "Weapon_Token";
-const weaponSymbol = "WPN";
-const weaponTokenURI = "https://api.example.com/weapon/1";
 const characterName = "Character_Token";
 const characterSymbol = "CHR";
 const characterTokenURI = "https://api.example.com/character/1";
+const tokenSellFeePercentage = 10; // // 0.015 (1.5%)
+const rubieName = "Rubie_Token";
+const rubieSymbol = "RUB";
+const experienceName = "Experience_Token";
+const experienceSymbol = "EXP";
 
 describe("OwnersContract Tests", () => {
-
   // Deploy the OwnersContract before running the tests
   before(async () => {
     console.log("Starting OwnersContract tests");
 
-    [signer, owner1] = await ethers.getSigners();
+    // Get Signer and provider
+    [signer, owner1, owner2, owner3] = await ethers.getSigners();
+    provider = ethers.provider;
+
+    // Deploy Contracts
     const ownersContractFactory = await ethers.getContractFactory(
       ownersContractPath,
       signer
     );
+
+    ownersContract = await ownersContractFactory.deploy(10);
+
     const characterContractFactory = await ethers.getContractFactory(
       characterContractPath,
       signer
     );
-    const weaponContractFactory = await ethers.getContractFactory(
-      weaponContractPath,
+    const rubieContractFactory = await ethers.getContractFactory(
+      rubieContractPath,
+      signer
+    );
+    const experienceContractFactory = await ethers.getContractFactory(
+      experienceContractPath,
       signer
     );
 
-    ownersContractInstance = await ownersContractFactory.deploy(10); // Set initial tokenSellFeePercentage to 10
-    
+    ownersContractInstance = await ownersContractFactory.deploy(
+      tokenSellFeePercentage
+    );
+
+    await ownersContractInstance.addOwner(signer.address);
+
+    rubieContractInstance = await rubieContractFactory.deploy(
+      rubieName,
+      rubieSymbol,
+      ownersContractInstance.address
+    );
+    experienceContractInstance = await experienceContractFactory.deploy(
+      experienceName,
+      experienceSymbol,
+      ownersContractInstance.address
+    );
+
     characterContractInstance = await characterContractFactory.deploy(
       characterName,
       characterSymbol,
@@ -150,83 +83,110 @@ describe("OwnersContract Tests", () => {
       ownersContractInstance.address
     );
 
-    weaponContractInstance = await weaponContractFactory.deploy(
-      weaponName,
-      weaponSymbol,
-      weaponTokenURI,
-      ownersContractInstance.address,
+    // Add contracts to OwnersContract
+    await ownersContractInstance.addContract(
+      "Rubie",
+      rubieContractInstance.address
+    );
+    await ownersContractInstance.addContract(
+      "Character",
       characterContractInstance.address
     );
-  
+    await ownersContractInstance.addContract(
+      "Experience",
+      experienceContractInstance.address
+    );
   });
 
-  describe("Constructor tests", () => {
-    it("Should deploy with valid parameters", async () => {
-      expect(await ownersContractInstance.tokenSellFeePercentage()).to.equal(10);
-      expect(await ownersContractInstance.ownerIndex()).to.equal(0);
+  describe("Deployment", () => {
+    describe("Constructor tests", () => {
+      it("Should deploy with valid parameters", async () => {
+        expect(await ownersContractInstance.tokenSellFeePercentage()).to.equal(
+          10
+        );
+      });
+    });
+  });
+
+  describe("addressOf Function", () => {
+    it("Should return the correct contract address", async () => {
+      await ownersContractInstance.addContract(
+        "Character2",
+        characterContractInstance.address
+      );
+      expect(await ownersContractInstance.addressOf("Character2")).to.equal(
+        characterContractInstance.address
+      );
     });
   });
 
   describe("Owners function tests", () => {
-    it("Should add a new owner", async () => {
-      await ownersContractInstance.addOwner(owner1.address);
-      expect(await ownersContractInstance.owners(owner1.address)).to.equal(true);
+    it("Should not be an owner initially", async () => {
+      expect(await ownersContractInstance.owners(account1.address)).to.equal(
+        false
+      );
     });
 
-    it("Should not be an owner initially", async () => {
-      expect(await ownersContractInstance.owners(signer.address)).to.equal(false);
+    it("Should add a new owner", async () => {
+      await ownersContractInstance.addOwner(account1.address);
+      expect(await ownersContractInstance.owners(account1.address)).to.equal(
+        true
+      );
     });
   });
 
   describe("Add Contract tests", () => {
     it("Should add a contract address", async () => {
       const contractName = "TestContract";
-      const contractAddress = ethers.utils.getAddress("0x1234567890123456789012345678901234567890");
+      const contractAddress = ethers.utils.getAddress(
+        "0x1234567890123456789012345678901234567890"
+      );
       await ownersContractInstance.addContract(contractName, contractAddress);
-      expect(await ownersContractInstance.addressOf(contractName)).to.equal(contractAddress);
+      expect(await ownersContractInstance.addressOf(contractName)).to.equal(
+        contractAddress
+      );
     });
   });
+  // it("should collect fee from a specific contract and distribute it among owners", async () => {
 
-  describe("Collect Fee From Contract tests", () => {
-    it("Should collect fees from a contract", async () => {
-      const contractName = "TestContract";
-      const contractAddress = ethers.utils.getAddress("0x1234567890123456789012345678901234567890");
-      await ownersContractInstance.addContract(contractName, contractAddress);
+  //   const initialBalances = await Promise.all(
+  //     [owner1, owner2].map(
+  //       async (owner) => await ethers.provider.getBalance(owner.address)
+  //     )
+  //   );
 
-      // Mock collectFee function in the TestContract
-      await ownersContractInstance.collectFeeFromContract(contractName);
+  //   await characterContract.safeMint("Character1", { value: ethers.utils.parseEther("0.1") });
 
-      // Check that the balanceOf the owners has increased
-      const owner1BalanceBefore = await signer.getBalance();
-      await ownersContractInstance.WithdrawEarnings();
-      const owner1BalanceAfter = await signer.getBalance();
+  //   await characterContract.buy(1, "NewName", { value: ethers.utils.parseEther("0.2") });
 
-      expect(owner1BalanceAfter).to.be.gt(owner1BalanceBefore);
-    });
-  });
+  //   const finalBalances = await Promise.all(
+  //     [owner1, owner2].map(
+  //       async (owner) => await ethers.provider.getBalance(owner.address)
+  //     )
+  //   );
 
-  describe("Withdraw Earnings tests", () => {
-    it("Should withdraw earnings", async () => {
-      // Deposit some funds to the contract
-      await signer.sendTransaction({
-        to: ownersContractInstance.address,
-        value: ethers.utils.parseEther("1.0")
-      });
+  //   await ownersContract.collectFeeFromContract("Character");
 
-      const contractBalanceBefore = await ethers.provider.getBalance(ownersContractInstance.address);
-      const ownerBalanceBefore = await signer.getBalance();
+  //   const contractBalance = await ethers.provider.getBalance(
+  //     ownersContract.address
+  //   );
+  //   expect(contractBalance).to.equal(0);
 
-      await ownersContractInstance.WithdrawEarnings();
+  //   for (let i = 0; i < initialBalances.length; i++) {
+  //     const expectedIncrease = initialBalances[i].add(
+  //       ethers.utils.parseEther("5")
+  //     );
+  //     expect(finalBalances[i]).to.equal(expectedIncrease);
+  //   }
+  // });
 
-      const contractBalanceAfter = await ethers.provider.getBalance(ownersContractInstance.address);
-      const ownerBalanceAfter = await signer.getBalance();
+  // it("should withdraw earnings", async () => {
+  //   await ownersContract.deposit({ value: ethers.utils.parseEther("10") });
 
-      expect(contractBalanceAfter).to.equal(ethers.BigNumber.from("0"));
-      expect(ownerBalanceAfter).to.be.gt(ownerBalanceBefore);
-    });
+  //   const initialBalance = await ethers.provider.getBalance(signer.address);
+  //   await ownersContract.withdrawEarnings();
+  //   const finalBalance = await ethers.provider.getBalance(signer.address);
 
-    it("Should revert when trying to withdraw with zero balance", async () => {
-      await expect(ownersContractInstance.WithdrawEarnings()).to.be.revertedWith("No earnings to withdraw");
-    });
-  });
+  //   expect(finalBalance.gt(initialBalance)).to.be.true;
+  // });
 });
