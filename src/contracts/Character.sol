@@ -31,15 +31,17 @@ contract Character is ICharacter, ERC721 {
     }
 
     function weapon(
-        uint256 _weaponIndex
-    ) external view isValidTokenId(_weaponIndex) returns (uint256 _weapon) {
-        return metadata[_weaponIndex].weapon[_weaponIndex];
+        uint256 _weaponIndex,
+        uint256 _tokenId
+    ) external view isValidTokenId(_tokenId) returns (uint256 _weapon) {
+        require(_weaponIndex < 3, "Invalid _weaponIndex");
+        return metadata[_tokenId].weapon[_weaponIndex];
     }
 
     function safeMint(string memory _name) external payable {
         require(bytes(_name).length > 0, "Invalid name");
         require(msg.value >= mintPrice, "Not enough ETH");
-        uint256[3] memory defaultEmptyWeapons;
+        uint256[3] memory defaultEmptyWeapons = [uint256(0), 0, 0];
         Metadata memory newCharacterMetadata = Metadata({
             name: _name,
             attackPoints: 100,
@@ -147,9 +149,11 @@ contract Character is ICharacter, ERC721 {
         this.safeTransferFrom(_oldOwner, msg.sender, _tokenId);
 
         // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
-        uint256 tokenSellFeePercentage = IOwnersContract(_oldOwner)
+        uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
-        totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
+        balanceOf[ownersContract] +=
+            (metadata[_tokenId].sellPrice * tokenSellFeePercentage) /
+            100;
     }
 
     function setMintingPrice(uint256 _mintPrice) external {
@@ -174,7 +178,9 @@ contract Character is ICharacter, ERC721 {
         uint256 _attackPoints,
         uint256 _armorPoints,
         uint256 _sellPrice,
-        uint256 _requiredExperience
+        uint256 _requiredExperience,
+        uint256 _weaponSlot,
+        uint256 _weaponTokenId
     ) external isValidTokenId(_tokenId) {
         require(
             msg.sender == IOwnersContract(ownersContract).addressOf("Weapon"),
@@ -184,6 +190,7 @@ contract Character is ICharacter, ERC721 {
         metadata[_tokenId].armorPoints = _armorPoints;
         metadata[_tokenId].sellPrice = _sellPrice;
         metadata[_tokenId].requiredExperience = _requiredExperience;
+        metadata[_tokenId].weapon[_weaponSlot] = _weaponTokenId;
     }
 
     function hasCharacter(address _owner) external view returns (bool _has) {

@@ -26,7 +26,6 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     uint256 public totalSupply;
     uint256 public mintPrice;
     address public ownersContract;
-    uint256 public totalFees;
 
     mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
@@ -65,7 +64,6 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         tokenURI = _tokenURI;
         ownersContract = _ownerContract;
         maxAmountPerAddress = _maxAmountPerAddress;
-        totalFees = 0;
     }
 
     function safeTransfer(
@@ -100,6 +98,8 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
             _from == msg.sender ||
                 allowance[_tokenId] == msg.sender ||
                 IOwnersContract(ownersContract).addressOf("Character") ==
+                msg.sender ||
+                IOwnersContract(ownersContract).addressOf("Weapon") ==
                 msg.sender,
             "Not the owner"
         );
@@ -136,15 +136,9 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not owners contract");
-        require(
-            IOwnersContract(ownersContract).owners(msg.sender),
-            "Not the owner"
-        ); //no sense to do this but it's specified in "letra de obligatorio"
-
-        //TODO: check if this does not have to be balanceOf[ownersContract]
-        require(totalFees > 0, "zero balance");
-        payable(msg.sender).transfer(totalFees);
-        totalFees = 0;
+        require(balanceOf[ownersContract] > 0, "zero balance");
+        payable(msg.sender).transfer(balanceOf[ownersContract]);
+        balanceOf[ownersContract] = 0;
     }
 
     function setMintPrice(uint256 _mintPrice) external {

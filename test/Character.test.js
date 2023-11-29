@@ -4,13 +4,11 @@ const { solidity } = require("ethereum-waffle");
 const { ConstructorFragment } = require("ethers/lib/utils");
 chai.use(solidity);
 const { expect } = chai;
-const erc721ContractPath = "./src/contracts/ERC721.sol:ERC721";
 const ownersContractPath = "./src/contracts/OwnersContract.sol:OwnersContract";
 const weaponContractPath = "./src/contracts/Weapon.sol:Weapon";
 const characterContractPath = "./src/contracts/Character.sol:Character";
 const rubieContractPath = "./src/contracts/Rubie.sol:Rubie";
 const experienceContractPath = "./src/contracts/Experience.sol:Experience";
-const DECIMAL_FACTOR = 10 ** 18;
 
 const confirmations_number = 1;
 const zeroAddress = ethers.constants.AddressZero;
@@ -27,7 +25,7 @@ const characterTokenURI = "https://api.example.com/character/1";
 const weaponName = "Weapon_Token";
 const weaponSymbol = "WPN";
 const weaponTokenURI = "https://api.example.com/weapon/1";
-const tokenSellFeePercentage = 0; // // 0.015 (1.5%)
+const tokenSellFeePercentage = 5;
 const rubieName = "Rubie_Token";
 const rubieSymbol = "RUB";
 const experienceName = "Experience_Token";
@@ -38,7 +36,8 @@ describe("Character Tests", () => {
     console.log("Starting Character tests");
 
     // Get Signer and provider
-    [signer, account1, account2, account3] = await ethers.getSigners();
+    [signer, account1, account2, account3, account4] =
+      await ethers.getSigners();
     provider = ethers.provider;
 
     // Deploy Contracts
@@ -66,7 +65,7 @@ describe("Character Tests", () => {
     );
 
     ownersContractInstance = await ownersContractFactory.deploy(
-      tokenSellFeePercentage * DECIMAL_FACTOR
+      tokenSellFeePercentage
     );
     await ownersContractInstance.deployed();
 
@@ -130,6 +129,14 @@ describe("Character Tests", () => {
 
     // Set Rubie Mint Price
     await rubieContractInstance.setPrice(ethers.utils.parseEther("0.001"));
+
+    // Set Experience Mint Price
+    await experienceContractInstance.setPrice(
+      ethers.utils.parseEther("0.0001")
+    );
+
+    // Set Weapon Mint Price
+    await weaponContractInstance.setMintPrice(50);
   });
 
   describe("Deploy & initialization tests", () => {
@@ -498,7 +505,6 @@ describe("Character Tests", () => {
       const ownerOf_after = await characterContractInstance.ownerOf(
         totalSupply_after
       );
-
       expect(totalSupply_after).to.be.equals(totalSupply_before.add(1));
       expect(signerBalance_after).to.be.equals(signerBalance_before.add(1));
       expect(ownerOf_after).to.be.equals(signer.address);
@@ -690,26 +696,184 @@ describe("Character Tests", () => {
     });
 
     it("Buy a character with correct parameters", async () => {
-      //TODO: fix this test, it's failing because there's no character, we need to mint it before
-      // await rubieContractInstance.connect(account2).buy(1000, { value: 1000 });
-      // await rubieContractInstance
-      //   .connect(account2)
-      //   .approve(experienceContractInstance.address, 1000);
-      // await experienceContractInstance.connect(account2).buy(500);
-      // const account3ExperienceBalance_before =
-      //   await experienceContractInstance.balanceOf(account2.address);
-      // expect(account3ExperienceBalance_before).to.be.equals(500);
-      // const tokenId = await characterContractInstance.totalSupply();
-      // const
-      // await characterContractInstance
-      //   .connect(account2)
-      //   .buy(tokenId, "New Character Name", {
-      //     value: 10000000,
-      //   });
+      // Buy Rubies for buying experience
+      await rubieContractInstance
+        .connect(account3)
+        .buy(200, { value: ethers.utils.parseEther("0.0002") });
+      expect(
+        await rubieContractInstance.balanceOf(account3.address)
+      ).to.be.equals(200);
+
+      // Approve the rubies
+      await rubieContractInstance
+        .connect(account3)
+        .approve(experienceContractInstance.address, 200);
+
+      await experienceContractInstance.connect(account3).buy(200);
+      expect(
+        await experienceContractInstance.balanceOf(account3.address)
+      ).to.be.equals(200);
+
+      const tokenId = await characterContractInstance.totalSupply();
+      const accoun3ETHBalance_before = await provider.getBalance(
+        account3.address
+      );
+
+      const tx = await characterContractInstance
+        .connect(account3)
+        .buy(tokenId, "New Character Name", {
+          value: ethers.utils.parseEther("0.08"),
+        });
+      const tx_receipt = await tx.wait(confirmations_number);
+
+      const _gas = tx_receipt.cumulativeGasUsed;
+      const _gasPrice = tx_receipt.effectiveGasPrice;
+      const _gasPaid = _gas.mul(_gasPrice);
+
+      const actualOwner = await characterContractInstance.ownerOf(tokenId);
+      const account3Balance = await characterContractInstance.balanceOf(
+        account3.address
+      );
+      const account3ETHBalance_after = await provider.getBalance(
+        account3.address
+      );
+
+      expect(actualOwner).to.be.equals(account3.address);
+      expect(account3Balance).to.be.equals(1);
+      expect(account3ETHBalance_after).to.be.equals(
+        accoun3ETHBalance_before
+          .sub(ethers.utils.parseEther("0.08"))
+          .sub(_gasPaid)
+      );
     });
   });
 
-  describe("Weapon-Character interaction tests", () => {});
+  describe("Weapon-Character interaction tests", () => {
+    before(async () => {
+      // Mint Rubies for signer account
+      await rubieContractInstance.buy(1574, {
+        value: ethers.utils.parseEther("1"),
+      });
+      // Approve the rubies
+      await rubieContractInstance.approve(weaponContractInstance.address, 2000);
 
-  describe("Collect Fees tests", () => {});
+      // Mint weapons
+      await weaponContractInstance.safeMint("Weapon 1");
+      const mintedWeapon1_tokenId = await weaponContractInstance.totalSupply();
+      // Put minted weapon on sale
+      await weaponContractInstance.setOnSale(mintedWeapon1_tokenId, true);
+
+      await weaponContractInstance.safeMint("Weapon 2");
+      const mintedWeapon2_tokenId = await weaponContractInstance.totalSupply();
+      // Put minted weapon on sale
+      await weaponContractInstance.setOnSale(mintedWeapon2_tokenId, true);
+
+      await weaponContractInstance.mintLegendaryWeapon(
+        155,
+        200,
+        ethers.utils.parseEther("0.04"),
+        20
+      );
+      const mintedWeapon3_tokenId = await weaponContractInstance.totalSupply();
+      // Put minted weapon on sale
+      await weaponContractInstance.setOnSale(mintedWeapon3_tokenId, true);
+
+      // Mint a new character
+      await characterContractInstance
+        .connect(account4)
+        .safeMint("Character 4", {
+          value: ethers.utils.parseEther("0.005"),
+        });
+      const mintedCharacter_tokenId =
+        await characterContractInstance.totalSupply();
+
+      // Buy more rubies for the account4
+      await rubieContractInstance
+        .connect(account4)
+        .buy(4000, { value: ethers.utils.parseEther("0.5") });
+
+      // Before buying the experience approve the contract to spend the rubies
+      await rubieContractInstance
+        .connect(account4)
+        .approve(experienceContractInstance.address, 0);
+      await rubieContractInstance
+        .connect(account4)
+        .approve(experienceContractInstance.address, 1250);
+      // Buy experience to buy the 3 weapons
+      await experienceContractInstance.connect(account4).buy(1250);
+
+      // Approve weapon contract to spend the rubies of account4
+      await rubieContractInstance
+        .connect(account4)
+        .approve(weaponContractInstance.address, 2000);
+
+      // With account4 buy the 3 weapons
+      await weaponContractInstance
+        .connect(account4)
+        .buy(mintedWeapon1_tokenId, "New Weapon Name 1");
+
+      await weaponContractInstance
+        .connect(account4)
+        .buy(mintedWeapon2_tokenId, "New Weapon Name 2");
+
+      await weaponContractInstance
+        .connect(account4)
+        .buy(mintedWeapon3_tokenId, "New Weapon Name 3");
+
+      // Equip the 3 weapons
+      await weaponContractInstance
+        .connect(account4)
+        .addWeaponToCharacter(mintedWeapon1_tokenId, mintedCharacter_tokenId);
+      await weaponContractInstance
+        .connect(account4)
+        .addWeaponToCharacter(mintedWeapon2_tokenId, mintedCharacter_tokenId);
+      await weaponContractInstance
+        .connect(account4)
+        .addWeaponToCharacter(mintedWeapon3_tokenId, mintedCharacter_tokenId);
+
+      console.log(mintedCharacter_tokenId);
+    });
+
+    it("Try to get the weapons of a character with invalid tokenId", async () => {
+      const totalSupply = await characterContractInstance.totalSupply();
+      await expect(
+        characterContractInstance.weapon(totalSupply.add(1), totalSupply)
+      ).to.be.revertedWith("Invalid _weaponIndex");
+    });
+
+    it("Get weapon equiped weapon from an index", async () => {
+      const characterTokenId = await characterContractInstance.totalSupply();
+      const weapon1 = await characterContractInstance.weapon(
+        0,
+        characterTokenId
+      );
+      const weapon2 = await characterContractInstance.weapon(
+        1,
+        characterTokenId
+      );
+      const weapon3 = await characterContractInstance.weapon(
+        2,
+        characterTokenId
+      );
+
+      expect(weapon1).to.be.equals(1);
+      expect(weapon2).to.be.equals(2);
+      expect(weapon3).to.be.equals(3);
+    });
+  });
+
+  describe("Collect Fees tests", () => {
+    it("Try to call collectFees from another contract that is not the owners contract", async () => {
+      await expect(characterContractInstance.collectFee()).to.be.revertedWith(
+        "Not owners contract"
+      );
+    });
+
+    it("Call collect fees from owners contract", async () => {
+      await ownersContractInstance.collectFeeFromContract("Character");
+      expect(
+        await ownersContractInstance.collectFeeFromContract("Character")
+      ).to.be.revertedWith("zero balance");
+    });
+  });
 });
