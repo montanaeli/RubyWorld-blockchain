@@ -67,7 +67,7 @@ abstract contract ERC20 is IERC20 {
         require(_value > 0, "Invalid _value");
         require(balanceOf[_from] >= _value, "Insufficient balance");
         require(
-            msg.sender == _from || allowance[_from][msg.sender] >= _value,
+            msg.sender == _from || allowance[_from][_to] >= _value,
             "Insufficent allowance"
         );
 
