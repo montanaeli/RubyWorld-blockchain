@@ -3,6 +3,8 @@ pragma solidity 0.8.16;
 
 import "src/interfaces/IOwnersContract.sol";
 
+import "hardhat/console.sol";
+
 contract OwnersContract is IOwnersContract {
     uint256 public tokenSellFeePercentage;
     uint256 public ownerIndex;
@@ -72,12 +74,15 @@ contract OwnersContract is IOwnersContract {
         string memory _contractName
     ) external onlyOwners {
         address soldContract = _addressOf[_contractName];
+        
+        (bool _successFee, bytes memory data) = soldContract.call(abi.encodeWithSignature("totalFees()"));
+        require(_successFee, "Call Failed");
+
 
         bytes memory collectFee = abi.encodeWithSignature("collectFee()");
         (bool _success, ) = soldContract.staticcall(collectFee);
         require(_success, "Call Failed");
 
-        uint256 balance = address(this).balance; // Ganancia recolectada
         require(balance > 0, "zero balance");
         uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir
         for (uint256 i = 0; i < ownerIndex; i++) {

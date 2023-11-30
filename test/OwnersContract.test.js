@@ -97,6 +97,7 @@ describe("OwnersContract Tests", () => {
     );
 
     await rubieContractInstance.setPrice(1);
+    await characterContractInstance.setMintPrice(10);
   });
 
   describe("Deployment", () => {
@@ -155,7 +156,7 @@ describe("OwnersContract Tests", () => {
       )
     );
 
-    await characterContractInstance.safeMint("Character1");
+    await characterContractInstance.safeMint("Character1", {value: 10});
 
     const tokenId = await characterContractInstance.totalSupply();
 
@@ -179,19 +180,19 @@ describe("OwnersContract Tests", () => {
       )
     );
 
-    // await ownersContract.collectFeeFromContract("Character");
+    await ownersContract.collectFeeFromContract("Character");
 
-    // const contractBalance = await ethers.provider.getBalance(
-    //   ownersContract.address
-    // );
-    // expect(contractBalance).to.equal(0);
+    const contractBalance = await ethers.provider.getBalance(
+      ownersContract.address
+    );
+    expect(contractBalance).to.equal(0);
 
-    // for (let i = 0; i < initialBalances.length; i++) {
-    //   const expectedIncrease = initialBalances[i].add(
-    //     ethers.utils.parseEther("5")
-    //   );
-    //   expect(finalBalances[i]).to.equal(expectedIncrease);
-    // }
+    for (let i = 0; i < initialBalances.length; i++) {
+      const expectedIncrease = initialBalances[i].add(
+        ethers.utils.parseEther("5")
+      );
+      expect(finalBalances[i]).to.equal(expectedIncrease);
+    }
   });
 
   // it("should withdraw earnings", async () => {

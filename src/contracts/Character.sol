@@ -117,6 +117,7 @@ contract Character is ICharacter, ERC721 {
         require(metadata[_tokenId].onSale, "Character not on sale");
         address experienceContractAddress = IOwnersContract(ownersContract)
             .addressOf("Experience");
+
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
@@ -147,10 +148,12 @@ contract Character is ICharacter, ERC721 {
         metadata[_tokenId].name = _newName;
         this.safeTransferFrom(_oldOwner, msg.sender, _tokenId);
 
-        // // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
+        // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
         uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
+        console.log(totalFees);
+
     }
 
     function setMintingPrice(uint256 _mintPrice) external {
