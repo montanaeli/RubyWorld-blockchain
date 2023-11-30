@@ -11,11 +11,13 @@ export const ContextProvider = ({ children }) => {
         setError('');
     }
 
+    const [wallet, setWallet] = useState('')
+
     const [contracts, setContracts] = useState()
     const [data, setData] = useState()
 
     return (
-        <Context.Provider value={{ closeErrorToast, error, setError, data, setData, contracts, setContracts }}>
+        <Context.Provider value={{ closeErrorToast, error, setError, data, setData, contracts, setContracts, wallet, setWallet }}>
             {children}
             {error ? <ErrorToast /> : null}
         </Context.Provider>
