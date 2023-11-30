@@ -138,17 +138,11 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not owners contract");
-<<<<<<< HEAD
-        require(totalFees > 0, "zero balance");
-        console.log("balance", address(this).balance);
-        console.log("total fees", totalFees);
-        payable(ownersContract).transfer(address(this).balance);
-        totalFees = 0;
-=======
         require(balanceOf[ownersContract] > 0, "zero balance");
-        payable(msg.sender).transfer(balanceOf[ownersContract]);
+        console.log("balance", address(this).balance);
+        console.log("total fees", balanceOf[ownersContract]);
+        payable(ownersContract).transfer(address(this).balance);
         balanceOf[ownersContract] = 0;
->>>>>>> 07da750fd4cbdbdad5e961344937a0b9b066582d
     }
 
     function setMintPrice(uint256 _mintPrice) external {

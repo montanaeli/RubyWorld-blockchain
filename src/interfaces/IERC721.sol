@@ -85,5 +85,5 @@ interface IERC721 {
     // OUR CODE
     // -----
 
-    function totalFees() external view returns (uint256 _totalFees);
+    // function totalFees() external view returns (uint256 _totalFees);
 }

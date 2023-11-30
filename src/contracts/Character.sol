@@ -157,9 +157,7 @@ contract Character is ICharacter, ERC721 {
         this.safeTransferFrom(_oldOwner, msg.sender, _tokenId);
 
         // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
-        uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
-            .tokenSellFeePercentage();
-        totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
+        balanceOf[ownersContract] += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
     }
 
     function setMintingPrice(uint256 _mintPrice) external {

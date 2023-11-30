@@ -39,10 +39,10 @@ contract OwnersContract is IOwnersContract {
         ownerIndex++;
     }
 
-    fallback() external payable {
-        balanceOf[address(this)] += msg.value;
-        //TODO: check this
-    }
+    // fallback() external payable {
+    //     balanceOf[address(this)] += msg.value;
+    //     //TODO: check this
+    // }
 
     function owners(
         address _ownerAddress
@@ -81,9 +81,9 @@ contract OwnersContract is IOwnersContract {
         address soldContract = _addressOf[_contractName];
 
         //TODO: hardcoded para character
-        uint256 balance = Character(soldContract).totalFees();
+        // uint256 balance = Character(soldContract).totalFees();
         Character(soldContract).collectFee();
-
+        uint256 balance = 0;
         require(balance > 0, "zero balance");
         uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir
         for (uint256 i = 0; i < ownerIndex; i++) {
