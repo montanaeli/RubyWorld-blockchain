@@ -28,7 +28,7 @@ function App() {
 
   const { setError, setContracts, setData, data, wallet, setWallet } = useContext()
 
-  const [tab, setTab] = useState(EContract.Character)
+  const [tab, setTab] = useState(EContract.Rubie)
 
 
   const Component = ComponentMap[tab]
