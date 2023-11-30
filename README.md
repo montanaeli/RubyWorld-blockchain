@@ -58,9 +58,10 @@ Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego cor
 ![Deployed Sepolia Transactions] TODO
 
 ## Address de los contratos deployados
-- Owners Contract: `0x9949593319B6a1F6e495Bb0db206b34400eA847b`
-- Rubie: `0x54CD8B3968F4389f184806B8CCCdfbC651fb6F93`
-- Experience: `0x44CdE851eA6205bB7AD7F36520EA8aBB9dd1709a`
-- Character: `0xD811859E48c7E97fBdBd8242E36CBcD049bBF5b6`
-- Weapon: `0xd999669f0a63fF62064C8088cf0330c86Ea17dad`
+- Owners Contract: `0x6170a32D6faf0518d85CbB335D06c3bd18D03Fb8`
+- Rubie: `0xa8c30C39aB58a6751157fE2A022FA9Ef6F6895BC`
+- Experience: `0xF39e17DBc734E163609F1B75988131096A5d9d32`
+- Character: `0xE526958F4fd43C6876b8DD1e2E7C96093C58CFbC`
+- Weapon: `0xCa537C1209667f8e2e761FBF95d0ED16A7690Ad6`
+
 

@@ -31,12 +31,11 @@ export const Rubie = () => {
 
 
       if (!name) {
-        setError("Name is required");
+        setError("Amount is required");
         return
       }
 
       await contracts.Rubie.mint(parseInt(name), wallet)
-      await contracts.Rubie.approve(contracts.Weapon.address, parseInt(name))
     } catch (err) {
       setError(err.message)
     }
@@ -46,6 +45,15 @@ export const Rubie = () => {
     try {
       await contracts.Rubie.approve(contracts.Weapon.address, 0)
     } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const approve = async () => {
+    try {
+      await contracts.Rubie.approve(contracts.Weapon.address, parseInt(rubiesRef.current.value))
+    }
+    catch (err) {
       setError(err.message)
     }
   }
@@ -60,8 +68,9 @@ export const Rubie = () => {
       </div>
       <div>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-          <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Name" ref={rubiesRef} />
-          <Button type="submit">Mint Rubies and Approve Weapon Contract to use them</Button>
+          <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Amount" ref={rubiesRef} />
+          <Button type="submit">Mint Rubies</Button>
+          <Button type="button" onClick={approve}>Aprove Weapon to use them</Button>
         </form>
         <div className="h-10"></div>
         <Button onClick={resetAllowance}>Reset Allowance on Weapon</Button>

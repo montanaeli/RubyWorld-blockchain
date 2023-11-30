@@ -34,7 +34,7 @@ export const Character = () => {
         return
       }
 
-      await contracts.Character.safeMint(name)
+      await contracts.Character.safeMint(name, { value: 1 })
     } catch (err) {
       setError(err.message)
     }
@@ -43,7 +43,6 @@ export const Character = () => {
   const getMetadataOfLastCharacter = async () => {
     try {
       const lastCharacterId = await contracts.Character.totalSupply();
-      if (lastCharacterId.toString() === '0') throw new Error("No characters minted yet");
       const metadata = await contracts.Character.metadataOf(lastCharacterId);
       setMetadata(metadata);
     } catch (err) {
