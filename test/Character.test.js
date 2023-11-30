@@ -830,8 +830,6 @@ describe("Character Tests", () => {
       await weaponContractInstance
         .connect(account4)
         .addWeaponToCharacter(mintedWeapon3_tokenId, mintedCharacter_tokenId);
-
-      console.log(mintedCharacter_tokenId);
     });
 
     it("Try to get the weapons of a character with invalid tokenId", async () => {
@@ -870,10 +868,30 @@ describe("Character Tests", () => {
     });
 
     it("Call collect fees from owners contract", async () => {
+      const ownersContractBalance_before = await provider.getBalance(
+        ownersContractInstance.address
+      );
+      const characterContractBalance_before = await provider.getBalance(
+        characterContractInstance.address
+      );
       await ownersContractInstance.collectFeeFromContract("Character");
-      expect(
-        await ownersContractInstance.collectFeeFromContract("Character")
-      ).to.be.revertedWith("zero balance");
+      const ownersContract_BalanceOnCharacter =
+        await characterContractInstance.balanceOf(
+          ownersContractInstance.address
+        );
+      const ownersContractBalance = await provider.getBalance(
+        ownersContractInstance.address
+      );
+      expect(ownersContract_BalanceOnCharacter).to.be.equals(0);
+      expect(ownersContractBalance).to.be.equals(
+        ownersContractBalance_before.add(characterContractBalance_before)
+      );
+    });
+
+    it("Call collect fees from owners but no founds", async () => {
+      await expect(
+        ownersContractInstance.collectFeeFromContract("Character")
+      ).to.be.revertedWith("Call Failed");
     });
   });
 });
