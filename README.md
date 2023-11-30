@@ -2,7 +2,9 @@
 
 ## Autores
 Nicolás Andreoli - 210630
+
 Pablo Pereyra - 234636
+
 Elisa Montaña - 262763
 
 ## Descripción
@@ -13,16 +15,17 @@ Hicimos mucho esfuerzo por testear la mayoría de las funcionalidades. Tenemos 1
 
 ![Cobertura](/assets/TestCoverage.png)
 
-Donde estamos más flojo es en el ERC721TokenReceiver ya que para cubrir sus líneas deberíamos emular ser un Contrato Inteligenente.
+Donde estamos más flojo es en el ERC721TokenReceiver, pero esto se debe a que no emulamos ser un Contrato Inteligente, lo cual no nos pareció tan crítico.
 
 ## Abstracciones
-Utilizamos muchas abstracciones de ERC721 y ERC20 ya que muchas funcionalidades se repetían entre los contratos:
+Utilizamos muchas abstracciones de ERC721 y ERC20 ya que muchas funcionalidades se repetían entre los contratos. Para ser más claros, vamos a mostrar las abstracciones e interfaces en estos primeros diagramas, y los métodos en otro separado (ver próxima sección del UML):
 
 ![ERC20](/assets/ERC20.png)
 ![ERC721](/assets/ERC721.png)
 ![Owners Contract](/assets/OwnersContract.png)
 
 ## Diagrama UML
+En este diagrama hacemos énfasis en la comunicación entre contratos y no tanto en las abstracciones (no hay interfaces):
 ![UML](/assets/UML.png)
 
 ## Setup
@@ -42,11 +45,13 @@ Luego, para correr tests y covertura:
 
 ### Frontend
 
-Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego correr:
+Recordar copiar los address de los contratos deployados en `apps/src/constants/contracts.js`, luego correr:
 
 1. `cd app`
 2. `npm i`
 3. `npm run dev`
+
+En caso de cambiar alguna firma de los métodos de los contratos, también va a ser necesario actualizar los ABIs en ese mismo file.
 
 ## Deploy
 1. Copiar el .env.example y renombrarlo a .env
@@ -54,8 +59,6 @@ Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego cor
 3. Correr el comando `npx hardhat run scripts/deploy.js --network sepolia`
 
 ![Deployed Contracts](/assets/DeployedContracts.png)
-
-![Deployed Sepolia Transactions] TODO
 
 ## Address de los contratos deployados
 - Owners Contract: `0x6170a32D6faf0518d85CbB335D06c3bd18D03Fb8`
@@ -65,3 +68,8 @@ Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego cor
 - Weapon: `0xCa537C1209667f8e2e761FBF95d0ED16A7690Ad6`
 
 
+## Video demo
+
+Por favor, acceder al siguiente link para ver el video demo:
+
+[Video Demo](https://www.youtube.com/watch?v=sW-OS2SXaaA&ab_channel=Nicol%C3%A1sAndreoli)
