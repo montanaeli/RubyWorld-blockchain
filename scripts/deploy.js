@@ -80,7 +80,6 @@ async function main() {
     characterContractInstance.address
   );
   console.log("-- WeaponContract Address:\t", weaponContractInstance.address);
-  await ownersContractInstance.addOwner(signer.address);
 
   // Deploy Rubie Contract
   const rubieContractFactory = await ethers.getContractFactory(

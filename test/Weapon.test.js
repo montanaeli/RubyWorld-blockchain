@@ -65,8 +65,6 @@ describe("Weapon Tests", () => {
       tokenSellFeePercentage * DECIMAL_FACTOR
     );
 
-    await ownersContractInstance.addOwner(signer.address);
-
     rubieContractInstance = await rubieContractFactory.deploy(
       rubieName,
       rubieSymbol,

@@ -23,7 +23,7 @@ Utilizamos muchas abstracciones de ERC721 y ERC20 ya que muchas funcionalidades 
 ![Owners Contract](/assets/OwnersContract.png)
 
 ## Diagrama UML
-TODO
+![UML] TODO
 
 ## Setup
 
@@ -54,6 +54,8 @@ Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego cor
 3. Correr el comando `npx hardhat run scripts/deploy.js --network sepolia`
 
 ![Deployed Contracts](/assets/DeployedContracts.png)
+
+![Deployed Sepolia Transactions] TODO
 
 ## Address de los contratos deployados
 - Owners Contract: `0x9949593319B6a1F6e495Bb0db206b34400eA847b`

@@ -60,8 +60,6 @@ describe("OwnersContract Tests", () => {
       tokenSellFeePercentage
     );
 
-    await ownersContractInstance.addOwner(signer.address);
-
     rubieContractInstance = await rubieContractFactory.deploy(
       rubieName,
       rubieSymbol,

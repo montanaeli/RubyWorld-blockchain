@@ -67,8 +67,6 @@ describe("Character Tests", () => {
     );
     await ownersContractInstance.deployed();
 
-    await ownersContractInstance.addOwner(signer.address);
-
     characterContractInstance = await characterContractFactory.deploy(
       characterName,
       characterSymbol,
