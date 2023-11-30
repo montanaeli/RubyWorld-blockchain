@@ -23,7 +23,7 @@ Utilizamos muchas abstracciones de ERC721 y ERC20 ya que muchas funcionalidades 
 ![Owners Contract](/assets/OwnersContract.png)
 
 ## Diagrama UML
-![UML] TODO
+![UML](/assets/UML.png)
 
 ## Setup
 
