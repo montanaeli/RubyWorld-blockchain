@@ -10,10 +10,13 @@ contract OwnersContract is IOwnersContract {
     mapping(uint256 => address) public ownersList;
 
     mapping(string => address) private _addressOf;
+    mapping(address => bool) private _protocolContracts;
 
     modifier onlyOwners() {
-        //TODO: check this, we gotta fix all tests if we allow this function
-        // require(this.owners(msg.sender), "Not the owner");
+        require(
+            this.owners(msg.sender) || _protocolContracts[msg.sender],
+            "Not the owner"
+        );
         _;
     }
 
@@ -66,6 +69,7 @@ contract OwnersContract is IOwnersContract {
         address _contract
     ) external onlyOwners isValidAddress(_contract) {
         _addressOf[_contractName] = _contract;
+        _protocolContracts[_contract] = true;
     }
 
     function collectFeeFromContract(

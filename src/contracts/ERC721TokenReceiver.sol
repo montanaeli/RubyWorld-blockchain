@@ -25,16 +25,16 @@ contract ERC721TokenReceiver is IERC721TokenReceiver {
     }
 
     function isERC721TokenReceiver(address _to, uint256 _tokenId) external {
-        //TODO: fix to run this only in Smart Contracts
-        require(_to != address(0), "Invalid contract");
-        bytes4 MAGIC_NUMBER = 0x150b7a02;
-        bytes memory _data;
-        bytes4 result = this.onERC721Received(
-            _to,
-            address(this),
-            _tokenId,
-            _data
-        );
-        require(result == MAGIC_NUMBER, "No ERC721Receiver");
+        if (_to.code.length > 0) {
+            bytes4 MAGIC_NUMBER = 0x150b7a02;
+            bytes memory _data;
+            bytes4 result = this.onERC721Received(
+                _to,
+                address(this),
+                _tokenId,
+                _data
+            );
+            require(result == MAGIC_NUMBER, "No ERC721Receiver");
+        }
     }
 }
