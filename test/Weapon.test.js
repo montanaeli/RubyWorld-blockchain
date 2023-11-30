@@ -35,8 +35,6 @@ const experienceSymbol = "EXP";
 
 describe("Weapon Tests", () => {
   before(async () => {
-    console.log("Starting Weapon tests");
-
     // Get Signer and provider
     [signer, account1, account2, account3] = await ethers.getSigners();
     provider = ethers.provider;
@@ -701,19 +699,17 @@ describe("Weapon Tests", () => {
 
       // Put weapon on sale
       await weaponContractInstance.connect(account1).setOnSale(weaponId, true);
-      console.log("After put on sale");
 
       // Buy Rubies for account 3
       await rubieContractInstance.connect(account3).buy(2000, {
         value: ethers.utils.parseEther("0.5"),
       });
-      console.log("After buy rubies");
+
       // Buy experience for account 3 before approve the experience contract to spend the rubies
       await rubieContractInstance
         .connect(account3)
         .approve(experienceContractInstance.address, 1000);
       await experienceContractInstance.connect(account3).buy(1000);
-      console.log("After buy experience");
 
       // Approve the weapon to spend rubies from account 3
       await rubieContractInstance
