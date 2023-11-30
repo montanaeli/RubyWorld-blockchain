@@ -20,7 +20,6 @@ contract OwnersContract is IOwnersContract {
         _;
     }
 
-    //TODO: check if this is ok
     modifier onlyEOA() {
         require(
             msg.sender == tx.origin,
