@@ -152,8 +152,6 @@ contract Character is ICharacter, ERC721 {
         uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
         totalFees += metadata[_tokenId].sellPrice * tokenSellFeePercentage;
-        console.log(totalFees);
-
     }
 
     function setMintingPrice(uint256 _mintPrice) external {

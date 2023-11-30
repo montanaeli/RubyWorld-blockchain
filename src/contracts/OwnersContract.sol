@@ -2,6 +2,7 @@
 pragma solidity 0.8.16;
 
 import "src/interfaces/IOwnersContract.sol";
+import "src/contracts/Character.sol";
 
 import "hardhat/console.sol";
 
@@ -39,6 +40,11 @@ contract OwnersContract is IOwnersContract {
         ownerIndex++;
     }
 
+    fallback() external payable {
+        balanceOf[address(this)] += msg.value;
+        //TODO: check this
+    }
+
     function owners(
         address _ownerAddress
     ) external view isValidAddress(_ownerAddress) returns (bool _isOwner) {
@@ -74,14 +80,10 @@ contract OwnersContract is IOwnersContract {
         string memory _contractName
     ) external onlyOwners {
         address soldContract = _addressOf[_contractName];
-        
-        (bool _successFee, bytes memory data) = soldContract.call(abi.encodeWithSignature("totalFees()"));
-        require(_successFee, "Call Failed");
 
-
-        bytes memory collectFee = abi.encodeWithSignature("collectFee()");
-        (bool _success, ) = soldContract.staticcall(collectFee);
-        require(_success, "Call Failed");
+        //TODO: hardcoded para character
+        uint256 balance = Character(soldContract).totalFees();
+        Character(soldContract).collectFee();
 
         require(balance > 0, "zero balance");
         uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir

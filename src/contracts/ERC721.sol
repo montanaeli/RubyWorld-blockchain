@@ -6,6 +6,8 @@ import "src/interfaces/IERC721TokenReceiver.sol";
 import "src/interfaces/IOwnersContract.sol";
 import "./ERC721TokenReceiver.sol";
 
+import "hardhat/console.sol";
+
 abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     // Events
     event Approval(
@@ -136,14 +138,10 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not owners contract");
-        require(
-            IOwnersContract(ownersContract).owners(msg.sender),
-            "Not the owner"
-        ); //no sense to do this but it's specified in "letra de obligatorio"
-
-        //TODO: check if this does not have to be balanceOf[ownersContract]
         require(totalFees > 0, "zero balance");
-        payable(msg.sender).transfer(totalFees);
+        console.log("balance", address(this).balance);
+        console.log("total fees", totalFees);
+        payable(ownersContract).transfer(address(this).balance);
         totalFees = 0;
     }
 
