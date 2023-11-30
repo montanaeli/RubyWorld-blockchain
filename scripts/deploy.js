@@ -129,6 +129,12 @@ async function main() {
     experienceContractInstance.address
   );
 
+  await rubieContractInstance.setPrice(1);
+  await experienceContractInstance.setPrice(1);
+
+  await weaponContractInstance.setMintPrice(1);
+  await characterContractInstance.setMintPrice(1);
+
   console.log(
     "---------------------------------------------------------------------------------------"
   );

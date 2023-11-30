@@ -35,7 +35,6 @@ export const Rubie = () => {
         return
       }
 
-      await contracts.Rubie.setPrice(1)
       await contracts.Rubie.mint(parseInt(name), wallet)
       await contracts.Rubie.approve(contracts.Weapon.address, parseInt(name))
     } catch (err) {
@@ -51,8 +50,8 @@ export const Rubie = () => {
         ))}
       </div>
       <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-        <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" type="text" placeholder="Name" ref={rubiesRef} />
-        <Button type="submit">Mint Rubies</Button>
+        <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Name" ref={rubiesRef} />
+        <Button type="submit">Mint Rubies and Approve Weapon Contract to use them</Button>
       </form>
     </section>
   );

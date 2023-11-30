@@ -34,7 +34,7 @@ function App() {
   const Component = ComponentMap[tab]
 
   useEffect(() => {
-    // handleOnConnect()
+    handleOnConnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
