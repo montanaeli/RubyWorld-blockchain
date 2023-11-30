@@ -31,7 +31,7 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     mapping(address => uint256) public balanceOf;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => address) public allowance;
-    uint256 private maxAmountPerAddress;
+    uint256 internal maxAmountPerAddress;
 
     modifier isValidTokenId(uint256 _tokenId) {
         require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenId");
@@ -48,7 +48,7 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         string memory _symbol,
         string memory _tokenURI,
         address _ownerContract,
-        uint256 _maxAmountPerAddress
+        uint256 _maxAmountPerAddress // 0 = unlimited
     ) {
         require(
             bytes(_name).length > 0 &&
@@ -72,10 +72,11 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
         require(ownerOf[_tokenId] == msg.sender, "Not the owner");
         require(
-            maxAmountPerAddress == 0 || balanceOf[_to] < maxAmountPerAddress,
+            maxAmountPerAddress == 0 ||
+                maxAmountPerAddress > balanceOf[_to] ||
+                IOwnersContract(ownersContract).owners(_to),
             "Max amount reached"
         );
-        // TODO: The part of the safe transfer
         ownerOf[_tokenId] = _to;
         balanceOf[msg.sender]--;
         balanceOf[_to]++;
@@ -91,7 +92,6 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         address _to,
         uint256 _tokenId
     ) external isValidTokenId(_tokenId) isValidAddress(_to) {
-        // TODO: Remains to implement the penultimum DEV requirement
         require(_tokenId <= totalSupply && _tokenId > 0, "Invalid tokenId");
         require(_to != address(0), "Invalid address");
         require(
@@ -104,7 +104,9 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
             "Not the owner"
         );
         require(
-            maxAmountPerAddress == 0 || balanceOf[_to] < maxAmountPerAddress,
+            maxAmountPerAddress == 0 ||
+                balanceOf[_to] < maxAmountPerAddress ||
+                IOwnersContract(ownersContract).owners(_to),
             "Max amount reached"
         );
         ownerOf[_tokenId] = _to;

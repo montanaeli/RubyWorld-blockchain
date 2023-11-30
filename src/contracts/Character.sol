@@ -41,6 +41,11 @@ contract Character is ICharacter, ERC721 {
     function safeMint(string memory _name) external payable {
         require(bytes(_name).length > 0, "Invalid name");
         require(msg.value >= mintPrice, "Not enough ETH");
+        require(
+            maxAmountPerAddress > balanceOf[msg.sender] ||
+                IOwnersContract(ownersContract).owners(msg.sender),
+            "Max amount reached"
+        );
         uint256[3] memory defaultEmptyWeapons = [uint256(0), 0, 0];
         Metadata memory newCharacterMetadata = Metadata({
             name: _name,
@@ -54,7 +59,7 @@ contract Character is ICharacter, ERC721 {
         totalSupply++;
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
-        tokensOf[msg.sender].push(totalSupply);
+        addTokenToAddress(msg.sender, totalSupply);
         metadata[totalSupply] = newCharacterMetadata;
         balanceOf[ownersContract] += msg.value;
         address rubieContractAddress = IOwnersContract(ownersContract)
@@ -79,6 +84,11 @@ contract Character is ICharacter, ERC721 {
             IOwnersContract(ownersContract).owners(msg.sender),
             "Not the owner"
         );
+        require(
+            maxAmountPerAddress > balanceOf[msg.sender] ||
+                IOwnersContract(ownersContract).owners(msg.sender),
+            "Max amount reached"
+        );
 
         Metadata memory newCharacterMetadata = Metadata({
             name: "Hero name",
@@ -92,6 +102,7 @@ contract Character is ICharacter, ERC721 {
         totalSupply++;
         balanceOf[msg.sender]++;
         ownerOf[totalSupply] = msg.sender;
+        addTokenToAddress(msg.sender, totalSupply);
         metadata[totalSupply] = newCharacterMetadata;
     }
 
@@ -117,12 +128,17 @@ contract Character is ICharacter, ERC721 {
         require(metadata[_tokenId].onSale, "Character not on sale");
         address experienceContractAddress = IOwnersContract(ownersContract)
             .addressOf("Experience");
-
         require(
             IExperience(experienceContractAddress).balanceOf(msg.sender) >=
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
+        require(
+            maxAmountPerAddress > balanceOf[msg.sender] ||
+                IOwnersContract(ownersContract).owners(msg.sender),
+            "Max amount reached"
+        );
+
         uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
 
