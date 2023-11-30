@@ -10,7 +10,6 @@ const weaponContractPath = "./src/contracts/Weapon.sol:Weapon";
 const characterContractPath = "./src/contracts/Character.sol:Character";
 const rubieContractPath = "./src/contracts/Rubie.sol:Rubie";
 const experienceContractPath = "./src/contracts/Experience.sol:Experience";
-const DECIMAL_FACTOR = 10 ** 18;
 
 let ownersContractInstance;
 let characterContractInstance;
@@ -23,7 +22,7 @@ const zeroAddress = ethers.constants.AddressZero;
 const characterName = "Character_Token";
 const characterSymbol = "CHR";
 const characterTokenURI = "https://api.example.com/character/1";
-const tokenSellFeePercentage = 10; // // 0.015 (1.5%)
+const tokenSellFeePercentage = 10;
 const rubieName = "Rubie_Token";
 const rubieSymbol = "RUB";
 const experienceName = "Experience_Token";
@@ -96,6 +95,8 @@ describe("OwnersContract Tests", () => {
       "Experience",
       experienceContractInstance.address
     );
+
+    await rubieContractInstance.setPrice(1);
   });
 
   describe("Deployment", () => {
@@ -147,38 +148,51 @@ describe("OwnersContract Tests", () => {
       );
     });
   });
-  // it("should collect fee from a specific contract and distribute it among owners", async () => {
+  it("should collect fee from a specific contract and distribute it among owners", async () => {
+    const initialBalances = await Promise.all(
+      [owner1, owner2].map(
+        async (owner) => await ethers.provider.getBalance(owner.address)
+      )
+    );
 
-  //   const initialBalances = await Promise.all(
-  //     [owner1, owner2].map(
-  //       async (owner) => await ethers.provider.getBalance(owner.address)
-  //     )
-  //   );
+    await characterContractInstance.safeMint("Character1");
 
-  //   await characterContract.safeMint("Character1", { value: ethers.utils.parseEther("0.1") });
+    const tokenId = await characterContractInstance.totalSupply();
 
-  //   await characterContract.buy(1, "NewName", { value: ethers.utils.parseEther("0.2") });
+    await characterContractInstance.setOnSale(tokenId, true);
 
-  //   const finalBalances = await Promise.all(
-  //     [owner1, owner2].map(
-  //       async (owner) => await ethers.provider.getBalance(owner.address)
-  //     )
-  //   );
+    await rubieContractInstance.connect(account2).buy(1000, { value: 1000 });
 
-  //   await ownersContract.collectFeeFromContract("Character");
+    await rubieContractInstance
+      .connect(account2)
+      .approve(experienceContractInstance.address, 1000);
 
-  //   const contractBalance = await ethers.provider.getBalance(
-  //     ownersContract.address
-  //   );
-  //   expect(contractBalance).to.equal(0);
+    await experienceContractInstance.connect(account2).buy(1000);
 
-  //   for (let i = 0; i < initialBalances.length; i++) {
-  //     const expectedIncrease = initialBalances[i].add(
-  //       ethers.utils.parseEther("5")
-  //     );
-  //     expect(finalBalances[i]).to.equal(expectedIncrease);
-  //   }
-  // });
+    await characterContractInstance.connect(account2).buy(tokenId, "NewName", {
+      value: 1000,
+    });
+
+    // const finalBalances = await Promise.all(
+    //   [owner1, owner2].map(
+    //     async (owner) => await ethers.provider.getBalance(owner.address)
+    //   )
+    // );
+
+    // await ownersContract.collectFeeFromContract("Character");
+
+    // const contractBalance = await ethers.provider.getBalance(
+    //   ownersContract.address
+    // );
+    // expect(contractBalance).to.equal(0);
+
+    // for (let i = 0; i < initialBalances.length; i++) {
+    //   const expectedIncrease = initialBalances[i].add(
+    //     ethers.utils.parseEther("5")
+    //   );
+    //   expect(finalBalances[i]).to.equal(expectedIncrease);
+    // }
+  });
 
   // it("should withdraw earnings", async () => {
   //   await ownersContract.deposit({ value: ethers.utils.parseEther("10") });
