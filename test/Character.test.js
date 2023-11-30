@@ -33,8 +33,6 @@ const experienceSymbol = "EXP";
 
 describe("Character Tests", () => {
   before(async () => {
-    console.log("Starting Character tests");
-
     // Get Signer and provider
     [signer, account1, account2, account3, account4] =
       await ethers.getSigners();

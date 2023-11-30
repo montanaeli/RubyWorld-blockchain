@@ -31,8 +31,6 @@ const experienceSymbol = "EXP";
 describe("OwnersContract Tests", () => {
   // Deploy the OwnersContract before running the tests
   before(async () => {
-    console.log("Starting OwnersContract tests");
-
     // Get Signer and provider
     [signer, owner1, owner2, owner3] = await ethers.getSigners();
     provider = ethers.provider;
