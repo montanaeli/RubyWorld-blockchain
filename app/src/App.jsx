@@ -26,16 +26,15 @@ const ComponentMap = {
 
 function App() {
 
-  const { setError, setContracts, setData, data } = useContext()
+  const { setError, setContracts, setData, data, wallet, setWallet } = useContext()
 
-  const [tab, setTab] = useState(EContract.Rubie)
+  const [tab, setTab] = useState(EContract.Character)
 
-  const [wallet, setWallet] = useState('')
 
   const Component = ComponentMap[tab]
 
   useEffect(() => {
-    handleOnConnect()
+    // handleOnConnect()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -72,7 +71,6 @@ function App() {
 
       const data = await getContractsData(contracts, _wallet)
 
-      console.log(data);
 
       setData({
         ethers: _ethers,

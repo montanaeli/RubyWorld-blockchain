@@ -20,9 +20,23 @@ Utilizamos muchas abstracciones de ERC721 y ERC20 ya que muchas funcionalidades 
 TODO
 
 ## Setup
+
+### Backend
+
+Correr los siguiente comandos:
+
 1. `npm i`
 2. `npx hardhat compile`
 3. `npx hardhat test`
+
+
+### Frontend
+
+Recordar copiar los abis finales en `apps/src/constants/contracts.js`, luego correr:
+
+1. `cd app`
+2. `npm i`
+3. `npm run dev`
 
 ## Deploy
 1. Copiar el .env.example y renombrarlo a .env
