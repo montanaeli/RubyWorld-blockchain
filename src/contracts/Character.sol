@@ -123,6 +123,8 @@ contract Character is ICharacter, ERC721 {
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
+        uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
+            .tokenSellFeePercentage();
 
         /// Transfer the weapons
         for (uint256 i = 0; i < metadata[_tokenId].weapon.length; i++) {
@@ -141,7 +143,11 @@ contract Character is ICharacter, ERC721 {
         if (msg.value > metadata[_tokenId].sellPrice) {
             // para no perder el cambio
             payable(msg.sender).transfer(
-                msg.value - metadata[_tokenId].sellPrice
+                msg.value -
+                    (metadata[_tokenId].sellPrice -
+                        (metadata[_tokenId].sellPrice *
+                            tokenSellFeePercentage) /
+                        100)
             );
         }
 
@@ -149,8 +155,7 @@ contract Character is ICharacter, ERC721 {
         this.safeTransferFrom(_oldOwner, msg.sender, _tokenId);
 
         // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
-        uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
-            .tokenSellFeePercentage();
+
         balanceOf[ownersContract] +=
             (metadata[_tokenId].sellPrice * tokenSellFeePercentage) /
             100;
@@ -181,11 +186,12 @@ contract Character is ICharacter, ERC721 {
         uint256 _requiredExperience,
         uint256 _weaponSlot,
         uint256 _weaponTokenId
-    ) external isValidTokenId(_tokenId) {
+    ) external {
         require(
             msg.sender == IOwnersContract(ownersContract).addressOf("Weapon"),
             "Not weapon contract"
         );
+        require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenIdddd");
         metadata[_tokenId].attackPoints = _attackPoints;
         metadata[_tokenId].armorPoints = _armorPoints;
         metadata[_tokenId].sellPrice = _sellPrice;

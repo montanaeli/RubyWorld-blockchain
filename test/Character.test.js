@@ -841,7 +841,7 @@ describe("Character Tests", () => {
       ).to.be.revertedWith("Invalid _weaponIndex");
     });
 
-    it("Get weapon equiped weapon from an index", async () => {
+    it("Get weapon equipped weapon from an index", async () => {
       const characterTokenId = await characterContractInstance.totalSupply();
       const weapon1 = await characterContractInstance.weapon(
         0,
@@ -856,9 +856,9 @@ describe("Character Tests", () => {
         characterTokenId
       );
 
-      expect(weapon1).to.be.equals(1);
+      expect(weapon1).to.be.equals(3);
       expect(weapon2).to.be.equals(2);
-      expect(weapon3).to.be.equals(3);
+      expect(weapon3).to.be.equals(1);
     });
   });
 

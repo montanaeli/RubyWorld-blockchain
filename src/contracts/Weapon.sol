@@ -139,44 +139,48 @@ contract Weapon is ERC721, IWeapon {
             "Insufficient allowance"
         );
 
-        // if (metadata[_tokenId].characterID != 0) {
-        //     // Look for an empty index of the weapon array and if not revert with not enough slots
-        //     uint256 weaponIndex = 0;
-        //     while (
-        //         ICharacter(characterContract)
-        //             .metadataOf(metadata[_tokenId].characterID)
-        //             .weapon[weaponIndex] != 0
-        //     ) {
-        //         weaponIndex++;
-        //     }
-        //     require(
-        //         weaponIndex > 0 && weaponIndex < 4,
-        //         "Weapon slots are full"
-        //     );
-
-        //     ICharacter(characterContract).setMetadataFromWeapon(
-        //         metadata[_tokenId].characterID,
-        //         ICharacter(characterContract)
-        //             .metadataOf(_tokenId)
-        //             .attackPoints - metadata[_tokenId].attackPoints,
-        //         ICharacter(characterContract).metadataOf(_tokenId).armorPoints -
-        //             metadata[_tokenId].armorPoints,
-        //         ICharacter(characterContract).metadataOf(_tokenId).sellPrice -
-        //             metadata[_tokenId].sellPrice,
-        //         ICharacter(characterContract)
-        //             .metadataOf(_tokenId)
-        //             .requiredExperience - metadata[_tokenId].requiredExperience,
-        //         weaponIndex,
-        //         _tokenId
-        //     );
-        // }
-
-        // TODO: check if the weapon is equiped to another character and if so unequip it and transfer it to the new owner
-
+        // Check if the weapon is equipped to another character and if so unequip it and transfer it to the new owner
         address oldOwner = ownerOf[_tokenId];
+        uint256 characterId = metadata[_tokenId].characterID;
+        if (characterId != 0) {
+            for (uint256 i = 0; i < 3; i++) {
+                if (
+                    ICharacter(characterContract)
+                        .metadataOf(characterId)
+                        .weapon[i] == _tokenId
+                ) {
+                    ICharacter(characterContract).setMetadataFromWeapon(
+                        i,
+                        ICharacter(characterContract)
+                            .metadataOf(characterId)
+                            .attackPoints - metadata[_tokenId].attackPoints,
+                        ICharacter(characterContract)
+                            .metadataOf(characterId)
+                            .armorPoints - metadata[_tokenId].armorPoints,
+                        ICharacter(characterContract)
+                            .metadataOf(characterId)
+                            .sellPrice - metadata[_tokenId].sellPrice,
+                        ICharacter(characterContract)
+                            .metadataOf(i)
+                            .requiredExperience -
+                            metadata[_tokenId].requiredExperience,
+                        i,
+                        0
+                    );
+                }
+            }
+        }
+
         // The Rubies that the sender paid must be transferred to the owner of the token
         IRubie(rubieContractAddress).transferFrom(
             msg.sender,
+            address(this),
+            metadata[_tokenId].sellPrice
+        );
+
+        // Send the Rubies to the owner of the token
+        IRubie(rubieContractAddress).transferFrom(
+            address(this),
             oldOwner,
             metadata[_tokenId].sellPrice
         );
@@ -184,7 +188,7 @@ contract Weapon is ERC721, IWeapon {
         metadata[_tokenId].name = _newName;
         this.safeTransferFrom(oldOwner, msg.sender, _tokenId);
 
-        // recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
+        // Recolecto los ethers que gana el owner de a cuerdo a su porcentaje de ganancia
         uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
         balanceOf[ownersContract] +=
@@ -212,18 +216,19 @@ contract Weapon is ERC721, IWeapon {
             metadata[_weaponId].characterID != _characterId,
             "Weapon already equipped"
         );
-        uint256 weaponSlot = 0;
+        bool awailableWeaponSlots = false;
+        uint256 freeWeaponSlot = 0;
         for (uint256 i = 0; i < 3; i++) {
             if (
                 ICharacter(characterContract).metadataOf(_characterId).weapon[
                     i
                 ] == 0
             ) {
-                weaponSlot = i;
-                break;
+                awailableWeaponSlots = true;
+                freeWeaponSlot = i;
             }
         }
-        require(weaponSlot >= 0 && weaponSlot < 3, "Weapon slots are full");
+        require(awailableWeaponSlots, "Weapon slots are full");
         require(
             allowance[_weaponId] == msg.sender ||
                 ownerOf[_weaponId] == msg.sender,
@@ -244,16 +249,17 @@ contract Weapon is ERC721, IWeapon {
 
         ICharacter(characterContract).setMetadataFromWeapon(
             _characterId,
-            ICharacter(characterContract).metadataOf(_weaponId).attackPoints +
-                metadata[_weaponId].attackPoints,
-            ICharacter(characterContract).metadataOf(_weaponId).armorPoints +
+            ICharacter(characterContract)
+                .metadataOf(_characterId)
+                .attackPoints + metadata[_weaponId].attackPoints,
+            ICharacter(characterContract).metadataOf(_characterId).armorPoints +
                 metadata[_weaponId].armorPoints,
-            ICharacter(characterContract).metadataOf(_weaponId).sellPrice +
+            ICharacter(characterContract).metadataOf(_characterId).sellPrice +
                 metadata[_weaponId].sellPrice,
             ICharacter(characterContract)
-                .metadataOf(_weaponId)
+                .metadataOf(_characterId)
                 .requiredExperience + metadata[_weaponId].requiredExperience,
-            weaponSlot,
+            freeWeaponSlot,
             _weaponId
         );
         metadata[_weaponId].characterID = _characterId;
@@ -273,40 +279,18 @@ contract Weapon is ERC721, IWeapon {
             metadata[_weaponId].characterID == _characterId,
             "Weapon not equipped"
         );
+        require(ownerOf[_weaponId] == msg.sender, "Not authorized");
+
         uint256 weaponSlot = 0;
         for (uint256 i = 0; i < 3; i++) {
             if (
                 ICharacter(characterContract).metadataOf(_characterId).weapon[
                     i
-                ] == 0
+                ] == _weaponId
             ) {
                 weaponSlot = i;
-                break;
             }
         }
-        require(weaponSlot > 0 && weaponSlot < 4, "Weapon slots are full");
-        require(ownerOf[_weaponId] == msg.sender, "Not authorized");
-
-        // Look for an empty index of the weapon array and if not revert with not enough slots
-        // uint256 weaponSlot = 0;
-        // while (
-        //     ICharacter(characterContract).metadataOf(_characterId).weapon[
-        //         weaponSlot
-        //     ] != 0
-        // ) {
-        //     weaponSlot++;
-        // }
-        // require(weaponSlot > 0 && weaponSlot < 4, "Weapon slots are full");
-
-        // for (uint256 i = 0; i < 3; i++) {
-        //     if (
-        //         ICharacter(characterContract).metadataOf(_characterId).weapon[
-        //             i
-        //         ] == _weaponId
-        //     ) {
-        //         revert("Weapon already equipped");
-        //     }
-        // }
 
         ICharacter(characterContract).setMetadataFromWeapon(
             _characterId,
@@ -321,7 +305,7 @@ contract Weapon is ERC721, IWeapon {
                 .metadataOf(_characterId)
                 .requiredExperience - metadata[_weaponId].requiredExperience,
             weaponSlot,
-            _weaponId
+            0
         );
         metadata[_weaponId].characterID = 0;
     }

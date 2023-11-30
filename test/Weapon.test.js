@@ -537,27 +537,199 @@ describe("Weapon Tests", () => {
       ).to.be.revertedWith("Invalid _characterId");
     });
 
-    // it("Equip weapon to character", async () => {
-    //   const weaponId = await weaponContractInstance.totalSupply();
-    //   // Creacte a new character
-    //   await characterContractInstance
-    //     .connect(account1)
-    //     .safeMint("Character 1", { value: ethers.utils.parseEther("0.005") });
-    //   const mintedCharacter_tokenId =
-    //     await characterContractInstance.totalSupply();
+    it("Equip weapon to character", async () => {
+      const weaponId = await weaponContractInstance.totalSupply();
+      // Creacte a new character
+      await characterContractInstance
+        .connect(account1)
+        .safeMint("Character 1", { value: ethers.utils.parseEther("0.005") });
+      const mintedCharacter_tokenId =
+        await characterContractInstance.totalSupply();
 
-    //   console.log(mintedCharacter_tokenId);
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weaponId, mintedCharacter_tokenId);
 
-    //   await weaponContractInstance
-    //     .connect(account1)
-    //     .addWeaponToCharacter(weaponId, mintedCharacter_tokenId);
+      const equippedWeapon = await characterContractInstance.weapon(
+        2,
+        mintedCharacter_tokenId
+      );
 
-    //   const equipedWeapon = await characterContractInstance.weapon(
-    //     0,
-    //     mintedCharacter_tokenId
-    //   );
+      expect(equippedWeapon).to.be.equals(weaponId);
+    });
 
-    //   expect(equipedWeapon).to.be.equals(weaponId);
-    // });
+    it("Try to equip a weapon that is already equipped", async () => {
+      const weaponId = await weaponContractInstance.totalSupply();
+      const characterId = await characterContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(weaponId, characterId)
+      ).to.be.revertedWith("Weapon already equipped");
+    });
+
+    it("Try to equip a weapon with another account", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await expect(
+        weaponContractInstance
+          .connect(account2)
+          .addWeaponToCharacter(1, characterId)
+      ).to.be.revertedWith("Not authorized to operate the weapon");
+    });
+
+    it("Should equip all character slots", async () => {
+      const weapon1Id = await weaponContractInstance.totalSupply();
+      const characterId = await characterContractInstance.totalSupply();
+
+      // Mint two more weapons
+      await weaponContractInstance.connect(account1).safeMint("Weapon 2");
+      const weapon2Id = await weaponContractInstance.totalSupply();
+      await weaponContractInstance.connect(account1).safeMint("Weapon 3");
+      const weapon3Id = await weaponContractInstance.totalSupply();
+
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weapon2Id, characterId);
+
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weapon3Id, characterId);
+
+      const equippedWeapon1 = await characterContractInstance.weapon(
+        0,
+        characterId
+      );
+      const equippedWeapon2 = await characterContractInstance.weapon(
+        1,
+        characterId
+      );
+      const equippedWeapon3 = await characterContractInstance.weapon(
+        2,
+        characterId
+      );
+
+      expect(equippedWeapon1).to.be.equals(weapon3Id);
+      expect(equippedWeapon2).to.be.equals(weapon2Id);
+      expect(equippedWeapon3).to.be.equals(weapon1Id);
+    });
+
+    it("Try to equip more weapons than the character slots", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await weaponContractInstance
+        .connect(account1)
+        .safeMint("Most Powerful Weapon");
+      const mintedWeapon = await weaponContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(mintedWeapon, characterId)
+      ).to.be.revertedWith("Weapon slots are full");
+    });
+
+    it("Try to equip a weapon to a not owned character", async () => {
+      // Mint a new Character
+      await characterContractInstance
+        .connect(account2)
+        .safeMint("Character 2", { value: ethers.utils.parseEther("0.005") });
+      const characterId = await characterContractInstance.totalSupply();
+
+      // Mint a new weapon
+      await weaponContractInstance.connect(account1).safeMint("Super Weapon");
+      const weaponId = await weaponContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(weaponId, characterId)
+      ).to.be.revertedWith("Not authorized to operate the character");
+    });
+  });
+
+  describe("Remove weapon from character", () => {
+    it("Try to remove weapon from character with invalid weapon id", async () => {
+      await expect(
+        weaponContractInstance.removeWeaponFromCharacter(10, 10)
+      ).to.be.revertedWith("Invalid _weaponId");
+    });
+    it("Try to remove weapon from character with invalid character id", async () => {
+      await expect(
+        weaponContractInstance.removeWeaponFromCharacter(1, 10)
+      ).to.be.revertedWith("Invalid _characterId");
+    });
+    it("Try to remove a not equiped weapon", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .removeWeaponFromCharacter(1, characterId)
+      ).to.be.revertedWith("Weapon not equipped");
+    });
+
+    it("Try to remove a weapon with another account", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+
+      await expect(
+        weaponContractInstance
+          .connect(account2)
+          .removeWeaponFromCharacter(5, characterId)
+      ).to.be.revertedWith("Not authorized");
+    });
+
+    it("Remove the weapon from the character", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+      const weaponId = 5;
+
+      await weaponContractInstance
+        .connect(account1)
+        .removeWeaponFromCharacter(weaponId, characterId);
+
+      const equippedWeapon = await characterContractInstance.weapon(
+        0,
+        characterId
+      );
+
+      expect(equippedWeapon).to.be.equals(0);
+    });
+  });
+
+  describe("Buy an equipped weapon", () => {
+    it("Try to buy an equipped weapon", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+      const weaponId = 4;
+
+      // Put weapon on sale
+      await weaponContractInstance.connect(account1).setOnSale(weaponId, true);
+      console.log("After put on sale");
+
+      // Buy Rubies for account 3
+      await rubieContractInstance.connect(account3).buy(2000, {
+        value: ethers.utils.parseEther("0.5"),
+      });
+      console.log("After buy rubies");
+      // Buy experience for account 3 before approve the experience contract to spend the rubies
+      await rubieContractInstance
+        .connect(account3)
+        .approve(experienceContractInstance.address, 1000);
+      await experienceContractInstance.connect(account3).buy(1000);
+      console.log("After buy experience");
+
+      // Approve the weapon to spend rubies from account 3
+      await rubieContractInstance
+        .connect(account3)
+        .approve(weaponContractInstance.address, 500);
+
+      // Buy the weapon
+      await weaponContractInstance
+        .connect(account3)
+        .buy(weaponId, "New Weapon Name");
+      const ownerOf = await weaponContractInstance.ownerOf(weaponId);
+      const equipedWeponOfPreviousOwner =
+        await characterContractInstance.weapon(1, characterId);
+
+      expect(ownerOf).to.be.equals(account3.address);
+      expect(equipedWeponOfPreviousOwner).to.be.equals(0);
+    });
   });
 });
