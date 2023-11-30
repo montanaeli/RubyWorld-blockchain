@@ -96,17 +96,17 @@ describe("OwnersContract Tests", () => {
       experienceContractInstance.address
     );
 
-    await rubieContractInstance.setPrice(1);
-    await characterContractInstance.setMintPrice(10);
+    await rubieContractInstance.setPrice(ethers.utils.parseEther("0.001"));
+    await characterContractInstance.setMintPrice(
+      ethers.utils.parseEther("0.05")
+    );
   });
 
-  describe("Deployment", () => {
-    describe("Constructor tests", () => {
-      it("Should deploy with valid parameters", async () => {
-        expect(await ownersContractInstance.tokenSellFeePercentage()).to.equal(
-          10
-        );
-      });
+  describe("Deployment - Constructor tests", () => {
+    it("Should deploy with valid parameters", async () => {
+      expect(await ownersContractInstance.tokenSellFeePercentage()).to.equal(
+        10
+      );
     });
   });
 
@@ -124,14 +124,14 @@ describe("OwnersContract Tests", () => {
 
   describe("Owners function tests", () => {
     it("Should not be an owner initially", async () => {
-      expect(await ownersContractInstance.owners(account1.address)).to.equal(
+      expect(await ownersContractInstance.owners(owner1.address)).to.equal(
         false
       );
     });
 
     it("Should add a new owner", async () => {
-      await ownersContractInstance.addOwner(account1.address);
-      expect(await ownersContractInstance.owners(account1.address)).to.equal(
+      await ownersContractInstance.addOwner(owner1.address);
+      expect(await ownersContractInstance.owners(owner1.address)).to.equal(
         true
       );
     });
@@ -149,59 +149,69 @@ describe("OwnersContract Tests", () => {
       );
     });
   });
-  it("should collect fee from a specific contract and distribute it among owners", async () => {
-    const initialBalances = await Promise.all(
-      [owner1, owner2].map(
-        async (owner) => await ethers.provider.getBalance(owner.address)
-      )
-    );
 
-    await characterContractInstance.safeMint("Character1", { value: 10 });
-
-    const tokenId = await characterContractInstance.totalSupply();
-
-    await characterContractInstance.setOnSale(tokenId, true);
-
-    await rubieContractInstance.connect(account2).buy(1000, { value: 1000 });
-
-    await rubieContractInstance
-      .connect(account2)
-      .approve(experienceContractInstance.address, 1000);
-
-    await experienceContractInstance.connect(account2).buy(1000);
-
-    await characterContractInstance.connect(account2).buy(tokenId, "NewName", {
-      value: 1000,
+  describe("Fees tests", () => {
+    it("Try to withdraw earnings from a non-owner account", async () => {
+      await expect(
+        ownersContractInstance.connect(owner2).WithdrawEarnings()
+      ).to.be.revertedWith("Not the owner");
     });
 
-    // const finalBalances = await Promise.all(
-    //   [owner1, owner2].map(
-    //     async (owner) => await ethers.provider.getBalance(owner.address)
-    //   )
-    // );
+    it("Try to withdraw earnings without earnings", async () => {
+      await expect(
+        ownersContractInstance.WithdrawEarnings()
+      ).to.be.revertedWith("No earnings to withdraw");
+    });
 
-    await ownersContractInstance.collectFeeFromContract("Character");
+    it("should collect fee from a specific contract and distribute it among owners", async () => {
+      const ownersContract_balance = await ethers.provider.getBalance(
+        ownersContractInstance.address
+      );
 
-    // const contractBalance = await ethers.provider.getBalance(
-    //   ownersContract.address
-    // );
-    // expect(contractBalance).to.equal(0);
+      await characterContractInstance.safeMint("Character1", {
+        value: ethers.utils.parseEther("0.05"),
+      });
+      const tokenId = await characterContractInstance.totalSupply();
 
-    // for (let i = 0; i < initialBalances.length; i++) {
-    //   const expectedIncrease = initialBalances[i].add(
-    //     ethers.utils.parseEther("5")
-    //   );
-    //   expect(finalBalances[i]).to.equal(expectedIncrease);
-    // }
+      await characterContractInstance.setOnSale(tokenId, true);
+      await rubieContractInstance.connect(owner2).buy(1000, { value: 1000 });
+      await rubieContractInstance
+        .connect(owner2)
+        .approve(experienceContractInstance.address, 1000);
+      await experienceContractInstance.connect(owner2).buy(1000);
+      await characterContractInstance.connect(owner2).buy(tokenId, "NewName", {
+        value: ethers.utils.parseEther("0.05"),
+      });
+
+      await ownersContractInstance.collectFeeFromContract("Character");
+
+      const ownersContract_balance_after = await ethers.provider.getBalance(
+        ownersContractInstance.address
+      );
+
+      expect(ownersContract_balance_after.gt(ownersContract_balance)).to.be
+        .true;
+    });
+
+    it("Should withdraw earnings", async () => {
+      const signer_balance_before = await ethers.provider.getBalance(
+        signer.address
+      );
+      const owner1_balance_before = await ethers.provider.getBalance(
+        owner1.address
+      );
+
+      await ownersContractInstance.WithdrawEarnings();
+
+      const signer_balance_after = await ethers.provider.getBalance(
+        signer.address
+      );
+      const owner1_balance_after = await ethers.provider.getBalance(
+        owner1.address
+      );
+
+      expect(signer_balance_after.gt(signer_balance_before)).to.be.true;
+      expect(owner1_balance_after.gt(owner1_balance_before)).to.be.true;
+    });
   });
-
-  // it("should withdraw earnings", async () => {
-  //   await ownersContract.deposit({ value: ethers.utils.parseEther("10") });
-
-  //   const initialBalance = await ethers.provider.getBalance(signer.address);
-  //   await ownersContract.withdrawEarnings();
-  //   const finalBalance = await ethers.provider.getBalance(signer.address);
-
-  //   expect(finalBalance.gt(initialBalance)).to.be.true;
-  // });
 });

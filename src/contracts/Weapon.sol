@@ -192,8 +192,8 @@ contract Weapon is ERC721, IWeapon {
         uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
             .tokenSellFeePercentage();
         balanceOf[ownersContract] +=
-            metadata[_tokenId].sellPrice *
-            tokenSellFeePercentage;
+            (metadata[_tokenId].sellPrice * tokenSellFeePercentage) /
+            100;
     }
 
     function setOnSale(uint256 _tokenId, bool _onSale) external {

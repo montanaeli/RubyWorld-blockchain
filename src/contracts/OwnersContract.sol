@@ -4,8 +4,6 @@ pragma solidity 0.8.16;
 import "src/interfaces/IOwnersContract.sol";
 import "src/contracts/Character.sol";
 
-import "hardhat/console.sol";
-
 contract OwnersContract is IOwnersContract {
     uint256 public tokenSellFeePercentage;
     uint256 public ownerIndex;
@@ -42,10 +40,7 @@ contract OwnersContract is IOwnersContract {
         ownerIndex++;
     }
 
-    // fallback() external payable {
-    //     balanceOf[address(this)] += msg.value;
-    //     //TODO: check this
-    // }
+    receive() external payable {}
 
     function owners(
         address _ownerAddress
@@ -82,22 +77,18 @@ contract OwnersContract is IOwnersContract {
     function collectFeeFromContract(
         string memory _contractName
     ) external onlyOwners {
-        address soldContract = _addressOf[_contractName];
-
-        //TODO: hardcoded para character
-        // uint256 balance = Character(soldContract).totalFees();
-        Character(soldContract).collectFee();
-        uint256 balance = 0;
-        require(balance > 0, "zero balance");
-        uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir
-        for (uint256 i = 0; i < ownerIndex; i++) {
-            balanceOf[ownersList[i]] += feeEarned;
-        }
+        bytes memory methodToCall = abi.encodeWithSignature("collectFee()");
+        (bool success, ) = _addressOf[_contractName].call(methodToCall);
+        require(success, "Call Failed");
     }
 
     function WithdrawEarnings() external onlyOwners onlyEOA {
         uint256 balance = address(this).balance;
         require(balance > 0, "No earnings to withdraw");
-        payable(msg.sender).transfer(balance);
+        // Distribuir la tarifa ganada a los propietarios en partes iguales
+        uint256 feeEarned = balance / ownerIndex;
+        for (uint256 i = 0; i < ownerIndex; i++) {
+            payable(ownersList[i]).transfer(feeEarned);
+        }
     }
 }

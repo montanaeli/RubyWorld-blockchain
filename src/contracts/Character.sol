@@ -8,8 +8,6 @@ import "src/interfaces/IRubie.sol";
 import "src/interfaces/IWeapon.sol";
 import "src/interfaces/IExperience.sol";
 
-import "hardhat/console.sol";
-
 /// @dev This contract must implement the ICharacter interface
 contract Character is ICharacter, ERC721 {
     mapping(uint256 => Metadata) public metadata;
@@ -174,8 +172,8 @@ contract Character is ICharacter, ERC721 {
 
         // recolecto los ethers que gana el owner de acuerdo a su porcentaje de ganancia
         balanceOf[ownersContract] +=
-            metadata[_tokenId].sellPrice *
-            tokenSellFeePercentage;
+            (metadata[_tokenId].sellPrice * tokenSellFeePercentage) /
+            100;
     }
 
     function setMintingPrice(uint256 _mintPrice) external {
