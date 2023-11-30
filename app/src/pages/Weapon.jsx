@@ -58,8 +58,6 @@ export const Weapon = () => {
   const getMetadataOfLastWeapon = async () => {
     try {
       const lastWeaponId = await contracts.Weapon.totalSupply();
-      console.log(lastWeaponId);
-      if (lastWeaponId === 0) throw new Error("No weapons minted yet");
       const metadata = await contracts.Weapon.metadataOf(lastWeaponId);
       setMetadata(metadata);
     } catch (err) {

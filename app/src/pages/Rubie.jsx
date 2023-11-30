@@ -42,6 +42,15 @@ export const Rubie = () => {
     }
   }
 
+  const resetAllowance = async () => {
+    try {
+      await contracts.Rubie.approve(contracts.Weapon.address, 0)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+
   return (
     <section className="flex gap-5 items-center">
       <div>
@@ -49,10 +58,14 @@ export const Rubie = () => {
           <p key={key}>{labelMap[key]}: {value}</p>
         ))}
       </div>
-      <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-        <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Name" ref={rubiesRef} />
-        <Button type="submit">Mint Rubies and Approve Weapon Contract to use them</Button>
-      </form>
+      <div>
+        <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+          <input type="number" className="w-50 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Name" ref={rubiesRef} />
+          <Button type="submit">Mint Rubies and Approve Weapon Contract to use them</Button>
+        </form>
+        <div className="h-10"></div>
+        <Button onClick={resetAllowance}>Reset Allowance on Weapon</Button>
+      </div>
     </section>
   );
 };
