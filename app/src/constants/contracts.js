@@ -7,7 +7,7 @@ export const CONTRACTS = {
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_tokenSellFreePercentage",
+          "name": "_tokenSellFeePercentage",
           "type": "uint256"
         }
       ],
@@ -166,9 +166,13 @@ export const CONTRACTS = {
       ],
       "stateMutability": "view",
       "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
     }
   ]`,
-    Address: "0x1AF24ECAdF92256f60F4bE32b06bf61b7a48c206",
+    Address: "0x9949593319B6a1F6e495Bb0db206b34400eA847b",
   },
   [EContract.Rubie]: {
     Abi: `[
@@ -493,7 +497,7 @@ export const CONTRACTS = {
       "type": "function"
     }
   ]`,
-    Address: "0xf11e43Bab8d16DFD8e32Cc7209EFcf8E97375dDB",
+    Address: "0x54CD8B3968F4389f184806B8CCCdfbC651fb6F93",
   },
   [EContract.Character]: {
     Abi: `[
@@ -1121,6 +1125,16 @@ export const CONTRACTS = {
           "internalType": "uint256",
           "name": "_requiredExperience",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_weaponSlot",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_weaponTokenId",
+          "type": "uint256"
         }
       ],
       "name": "setMetadataFromWeapon",
@@ -1224,19 +1238,6 @@ export const CONTRACTS = {
     },
     {
       "inputs": [],
-      "name": "totalFees",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "totalSupply",
       "outputs": [
         {
@@ -1254,6 +1255,11 @@ export const CONTRACTS = {
           "internalType": "uint256",
           "name": "_weaponIndex",
           "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tokenId",
+          "type": "uint256"
         }
       ],
       "name": "weapon",
@@ -1268,7 +1274,7 @@ export const CONTRACTS = {
       "type": "function"
     }
   ]`,
-    Address: "0x59343179da000b9CF7e92a883f5Ac99bB57375C3",
+    Address: "0xD811859E48c7E97fBdBd8242E36CBcD049bBF5b6",
   },
   [EContract.Experience]: {
     Abi: `[
@@ -1580,7 +1586,7 @@ export const CONTRACTS = {
       "type": "function"
     }
   ]`,
-    Address: "0xd5d884C38339c2A5E4302153b48a16AFad387B6e",
+    Address: "0x44CdE851eA6205bB7AD7F36520EA8aBB9dd1709a",
   },
   [EContract.Weapon]: {
     Abi: `[
@@ -2248,19 +2254,6 @@ export const CONTRACTS = {
     },
     {
       "inputs": [],
-      "name": "totalFees",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "totalSupply",
       "outputs": [
         {
@@ -2273,6 +2266,6 @@ export const CONTRACTS = {
       "type": "function"
     }
   ]`,
-    Address: "0xd7A4c198585208A2E6911DabE3943f2aa1d9D7f6",
+    Address: "0xd999669f0a63fF62064C8088cf0330c86Ea17dad",
   },
 };
