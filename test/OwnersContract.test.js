@@ -173,11 +173,11 @@ describe("OwnersContract Tests", () => {
       value: 1000,
     });
 
-    // const finalBalances = await Promise.all(
-    //   [owner1, owner2].map(
-    //     async (owner) => await ethers.provider.getBalance(owner.address)
-    //   )
-    // );
+    const finalBalances = await Promise.all(
+      [owner1, owner2].map(
+        async (owner) => await ethers.provider.getBalance(owner.address)
+      )
+    );
 
     // await ownersContract.collectFeeFromContract("Character");
 
