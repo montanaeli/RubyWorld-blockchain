@@ -33,15 +33,17 @@ contract Character is ICharacter, ERC721 {
     }
 
     function weapon(
-        uint256 _weaponIndex
-    ) external view isValidTokenId(_weaponIndex) returns (uint256 _weapon) {
-        return metadata[_weaponIndex].weapon[_weaponIndex];
+        uint256 _weaponIndex,
+        uint256 _tokenId
+    ) external view isValidTokenId(_tokenId) returns (uint256 _weapon) {
+        require(_weaponIndex < 3, "Invalid _weaponIndex");
+        return metadata[_tokenId].weapon[_weaponIndex];
     }
 
     function safeMint(string memory _name) external payable {
         require(bytes(_name).length > 0, "Invalid name");
         require(msg.value >= mintPrice, "Not enough ETH");
-        uint256[3] memory defaultEmptyWeapons;
+        uint256[3] memory defaultEmptyWeapons = [uint256(0), 0, 0];
         Metadata memory newCharacterMetadata = Metadata({
             name: _name,
             attackPoints: 100,
@@ -123,6 +125,8 @@ contract Character is ICharacter, ERC721 {
                 metadata[_tokenId].requiredExperience,
             "Insufficient experience"
         );
+        uint256 tokenSellFeePercentage = IOwnersContract(ownersContract)
+            .tokenSellFeePercentage();
 
         /// Transfer the weapons
         for (uint256 i = 0; i < metadata[_tokenId].weapon.length; i++) {
@@ -141,7 +145,11 @@ contract Character is ICharacter, ERC721 {
         if (msg.value > metadata[_tokenId].sellPrice) {
             // para no perder el cambio
             payable(msg.sender).transfer(
-                msg.value - metadata[_tokenId].sellPrice
+                msg.value -
+                    (metadata[_tokenId].sellPrice -
+                        (metadata[_tokenId].sellPrice *
+                            tokenSellFeePercentage) /
+                        100)
             );
         }
 
@@ -176,16 +184,20 @@ contract Character is ICharacter, ERC721 {
         uint256 _attackPoints,
         uint256 _armorPoints,
         uint256 _sellPrice,
-        uint256 _requiredExperience
-    ) external isValidTokenId(_tokenId) {
+        uint256 _requiredExperience,
+        uint256 _weaponSlot,
+        uint256 _weaponTokenId
+    ) external {
         require(
             msg.sender == IOwnersContract(ownersContract).addressOf("Weapon"),
             "Not weapon contract"
         );
+        require(_tokenId > 0 && _tokenId <= totalSupply, "Invalid tokenIdddd");
         metadata[_tokenId].attackPoints = _attackPoints;
         metadata[_tokenId].armorPoints = _armorPoints;
         metadata[_tokenId].sellPrice = _sellPrice;
         metadata[_tokenId].requiredExperience = _requiredExperience;
+        metadata[_tokenId].weapon[_weaponSlot] = _weaponTokenId;
     }
 
     function hasCharacter(address _owner) external view returns (bool _has) {

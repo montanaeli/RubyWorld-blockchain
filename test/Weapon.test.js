@@ -113,8 +113,21 @@ describe("Weapon Tests", () => {
       weaponContractInstance.address
     );
 
+    // Set Experience Mint Price
+    await experienceContractInstance.setPrice(
+      ethers.utils.parseEther("0.0001")
+    );
+
     // Set weapon mintPrice
     await weaponContractInstance.setMintPrice(100);
+
+    // Set Rubie minPrice
+    await rubieContractInstance.setPrice(ethers.utils.parseEther("0.001"));
+
+    // Set Character Mint Price
+    await characterContractInstance.setMintingPrice(
+      ethers.utils.parseEther("0.005")
+    );
   });
 
   describe("Deploy tests", () => {
@@ -264,12 +277,8 @@ describe("Weapon Tests", () => {
         _recipient
       );
 
-      console.log("Before calling mint");
-
       const tx = await weaponContractInstance.safeMint(_name);
       const tx_receipt = await tx.wait(confirmations_number);
-
-      console.log("After calling mint");
 
       const _gas = tx_receipt.cumulativeGasUsed;
       const _gasPrice = tx_receipt.effectiveGasPrice;
@@ -326,12 +335,10 @@ describe("Weapon Tests", () => {
       const _name = "Lengendary weapon name";
       const _attackPoints = 155;
       const _armorPoints = 101;
-      const _sellPrice = 150;
+      const _sellPrice = ethers.utils.parseEther("0.025");
       const _requiredExperience = 100;
-
       const totalSupply_before = await weaponContractInstance.totalSupply();
 
-      // Perform the legendary weapon mint and then validate if all the data is corrent
       await weaponContractInstance.mintLegendaryWeapon(
         _attackPoints,
         _armorPoints,
@@ -348,7 +355,9 @@ describe("Weapon Tests", () => {
       expect(legendaryWeaponMetadata.name).to.be.equals(_name);
       expect(legendaryWeaponMetadata.attackPoints).to.be.equals(_attackPoints);
       expect(legendaryWeaponMetadata.armorPoints).to.be.equals(_armorPoints);
-      expect(legendaryWeaponMetadata.sellPrice).to.be.equals(_sellPrice);
+      expect(legendaryWeaponMetadata.sellPrice).to.be.equals(
+        ethers.utils.parseEther("0.025") / ethers.utils.parseEther("0.001")
+      );
       expect(legendaryWeaponMetadata.requiredExperience).to.be.equals(
         _requiredExperience
       );
@@ -387,20 +396,20 @@ describe("Weapon Tests", () => {
   describe("Buy weapon tests", () => {
     it("Try buy a weapon with not enough Rubies", async () => {
       await expect(
-        weaponContractInstance.buy(1, "New Name", { value: 50 })
+        weaponContractInstance.connect(account3).buy(1, "New Name")
       ).to.be.revertedWith("Not enough Rubies");
     });
 
     it("Try buy a weapon with an invalid tokenId", async () => {
       await expect(
-        weaponContractInstance.buy(0, "New Name", { value: 200 })
+        weaponContractInstance.buy(0, "New Name")
       ).to.be.revertedWith("Invalid tokenId");
     });
 
     it("Try to buy a weapon that is not on sale", async () => {
       weaponContractInstance.setOnSale(1, false);
       await expect(
-        weaponContractInstance.buy(1, "New Name", { value: 200 })
+        weaponContractInstance.buy(1, "New Name")
       ).to.be.revertedWith("weapon not on sale");
 
       weaponContractInstance.setOnSale(1, true);
@@ -412,7 +421,74 @@ describe("Weapon Tests", () => {
       ).to.be.revertedWith("Insufficient experience");
     });
 
-    // TODO: Test buy with enough Rubies and experience and the rest of the functionality
+    it("Should buy a weapon", async () => {
+      // Mint Rubies for signer account
+      await rubieContractInstance.connect(account1).buy(2000, {
+        value: ethers.utils.parseEther("1"),
+      });
+      // Approve the rubies
+      await rubieContractInstance
+        .connect(account1)
+        .approve(weaponContractInstance.address, 0);
+      await rubieContractInstance
+        .connect(account1)
+        .approve(weaponContractInstance.address, 2000);
+
+      // Before buying the experience approve the contract to spend the rubies
+      await rubieContractInstance
+        .connect(account1)
+        .approve(experienceContractInstance.address, 0);
+      await rubieContractInstance
+        .connect(account1)
+        .approve(experienceContractInstance.address, 1250);
+      // Buy experience to buy the 3 weapons
+      await experienceContractInstance.connect(account1).buy(1250);
+
+      // Mint weapons
+      await weaponContractInstance.safeMint("Weapon 1");
+      const mintedWeapon1_tokenId = await weaponContractInstance.totalSupply();
+      // Put minted weapon on sale
+      await weaponContractInstance.setOnSale(mintedWeapon1_tokenId, true);
+
+      const balanceOf_before = await weaponContractInstance.balanceOf(
+        account1.address
+      );
+
+      const account1_Rubies_before = await rubieContractInstance.balanceOf(
+        account1.address
+      );
+
+      // Using account1 buy the weapon
+      await weaponContractInstance
+        .connect(account1)
+        .buy(mintedWeapon1_tokenId, "New Weapon Name 1");
+
+      const balanceOf_after = await weaponContractInstance.balanceOf(
+        account1.address
+      );
+      const [
+        characterId,
+        attackPoints,
+        armorPoints,
+        sellPrice,
+        requiredExperience,
+        name,
+        onSale,
+      ] = await weaponContractInstance.metadataOf(mintedWeapon1_tokenId);
+
+      const account1_Rubies_after = await rubieContractInstance.balanceOf(
+        account1.address
+      );
+
+      expect(balanceOf_after).to.be.equals(balanceOf_before.add(1));
+      expect(name).to.be.equals("New Weapon Name 1");
+      expect(
+        await weaponContractInstance.ownerOf(mintedWeapon1_tokenId)
+      ).to.be.equals(account1.address);
+      expect(account1_Rubies_before).to.be.equals(
+        account1_Rubies_after.add(100)
+      );
+    });
   });
 
   describe("Weapon on sale tests", () => {
@@ -445,6 +521,215 @@ describe("Weapon Tests", () => {
         _tokenId
       );
       expect(onSale).to.be.equals(false);
+    });
+  });
+
+  describe("Add weapon to character", () => {
+    it("Try to add weapon to character with invalid weapon id", async () => {
+      await expect(
+        weaponContractInstance.addWeaponToCharacter(10, 10)
+      ).to.be.revertedWith("Invalid _weaponId");
+    });
+
+    it("Try to add weapon to character with invalid character id", async () => {
+      await expect(
+        weaponContractInstance.addWeaponToCharacter(1, 10)
+      ).to.be.revertedWith("Invalid _characterId");
+    });
+
+    it("Equip weapon to character", async () => {
+      const weaponId = await weaponContractInstance.totalSupply();
+      // Creacte a new character
+      await characterContractInstance
+        .connect(account1)
+        .safeMint("Character 1", { value: ethers.utils.parseEther("0.005") });
+      const mintedCharacter_tokenId =
+        await characterContractInstance.totalSupply();
+
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weaponId, mintedCharacter_tokenId);
+
+      const equippedWeapon = await characterContractInstance.weapon(
+        2,
+        mintedCharacter_tokenId
+      );
+
+      expect(equippedWeapon).to.be.equals(weaponId);
+    });
+
+    it("Try to equip a weapon that is already equipped", async () => {
+      const weaponId = await weaponContractInstance.totalSupply();
+      const characterId = await characterContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(weaponId, characterId)
+      ).to.be.revertedWith("Weapon already equipped");
+    });
+
+    it("Try to equip a weapon with another account", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await expect(
+        weaponContractInstance
+          .connect(account2)
+          .addWeaponToCharacter(1, characterId)
+      ).to.be.revertedWith("Not authorized to operate the weapon");
+    });
+
+    it("Should equip all character slots", async () => {
+      const weapon1Id = await weaponContractInstance.totalSupply();
+      const characterId = await characterContractInstance.totalSupply();
+
+      // Mint two more weapons
+      await weaponContractInstance.connect(account1).safeMint("Weapon 2");
+      const weapon2Id = await weaponContractInstance.totalSupply();
+      await weaponContractInstance.connect(account1).safeMint("Weapon 3");
+      const weapon3Id = await weaponContractInstance.totalSupply();
+
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weapon2Id, characterId);
+
+      await weaponContractInstance
+        .connect(account1)
+        .addWeaponToCharacter(weapon3Id, characterId);
+
+      const equippedWeapon1 = await characterContractInstance.weapon(
+        0,
+        characterId
+      );
+      const equippedWeapon2 = await characterContractInstance.weapon(
+        1,
+        characterId
+      );
+      const equippedWeapon3 = await characterContractInstance.weapon(
+        2,
+        characterId
+      );
+
+      expect(equippedWeapon1).to.be.equals(weapon3Id);
+      expect(equippedWeapon2).to.be.equals(weapon2Id);
+      expect(equippedWeapon3).to.be.equals(weapon1Id);
+    });
+
+    it("Try to equip more weapons than the character slots", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await weaponContractInstance
+        .connect(account1)
+        .safeMint("Most Powerful Weapon");
+      const mintedWeapon = await weaponContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(mintedWeapon, characterId)
+      ).to.be.revertedWith("Weapon slots are full");
+    });
+
+    it("Try to equip a weapon to a not owned character", async () => {
+      // Mint a new Character
+      await characterContractInstance
+        .connect(account2)
+        .safeMint("Character 2", { value: ethers.utils.parseEther("0.005") });
+      const characterId = await characterContractInstance.totalSupply();
+
+      // Mint a new weapon
+      await weaponContractInstance.connect(account1).safeMint("Super Weapon");
+      const weaponId = await weaponContractInstance.totalSupply();
+
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .addWeaponToCharacter(weaponId, characterId)
+      ).to.be.revertedWith("Not authorized to operate the character");
+    });
+  });
+
+  describe("Remove weapon from character", () => {
+    it("Try to remove weapon from character with invalid weapon id", async () => {
+      await expect(
+        weaponContractInstance.removeWeaponFromCharacter(10, 10)
+      ).to.be.revertedWith("Invalid _weaponId");
+    });
+    it("Try to remove weapon from character with invalid character id", async () => {
+      await expect(
+        weaponContractInstance.removeWeaponFromCharacter(1, 10)
+      ).to.be.revertedWith("Invalid _characterId");
+    });
+    it("Try to remove a not equiped weapon", async () => {
+      const characterId = await characterContractInstance.totalSupply();
+      await expect(
+        weaponContractInstance
+          .connect(account1)
+          .removeWeaponFromCharacter(1, characterId)
+      ).to.be.revertedWith("Weapon not equipped");
+    });
+
+    it("Try to remove a weapon with another account", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+
+      await expect(
+        weaponContractInstance
+          .connect(account2)
+          .removeWeaponFromCharacter(5, characterId)
+      ).to.be.revertedWith("Not authorized");
+    });
+
+    it("Remove the weapon from the character", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+      const weaponId = 5;
+
+      await weaponContractInstance
+        .connect(account1)
+        .removeWeaponFromCharacter(weaponId, characterId);
+
+      const equippedWeapon = await characterContractInstance.weapon(
+        0,
+        characterId
+      );
+
+      expect(equippedWeapon).to.be.equals(0);
+    });
+  });
+
+  describe("Buy an equipped weapon", () => {
+    it("Try to buy an equipped weapon", async () => {
+      const characterId = (await characterContractInstance.totalSupply()) - 1;
+      const weaponId = 4;
+
+      // Put weapon on sale
+      await weaponContractInstance.connect(account1).setOnSale(weaponId, true);
+      console.log("After put on sale");
+
+      // Buy Rubies for account 3
+      await rubieContractInstance.connect(account3).buy(2000, {
+        value: ethers.utils.parseEther("0.5"),
+      });
+      console.log("After buy rubies");
+      // Buy experience for account 3 before approve the experience contract to spend the rubies
+      await rubieContractInstance
+        .connect(account3)
+        .approve(experienceContractInstance.address, 1000);
+      await experienceContractInstance.connect(account3).buy(1000);
+      console.log("After buy experience");
+
+      // Approve the weapon to spend rubies from account 3
+      await rubieContractInstance
+        .connect(account3)
+        .approve(weaponContractInstance.address, 500);
+
+      // Buy the weapon
+      await weaponContractInstance
+        .connect(account3)
+        .buy(weaponId, "New Weapon Name");
+      const ownerOf = await weaponContractInstance.ownerOf(weaponId);
+      const equipedWeponOfPreviousOwner =
+        await characterContractInstance.weapon(1, characterId);
+
+      expect(ownerOf).to.be.equals(account3.address);
+      expect(equipedWeponOfPreviousOwner).to.be.equals(0);
     });
   });
 });

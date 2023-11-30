@@ -28,7 +28,6 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
     uint256 public totalSupply;
     uint256 public mintPrice;
     address public ownersContract;
-    uint256 public totalFees;
 
     mapping(address => uint256[]) public tokensOf;
     mapping(address => uint256) public balanceOf;
@@ -67,7 +66,6 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
         tokenURI = _tokenURI;
         ownersContract = _ownerContract;
         maxAmountPerAddress = _maxAmountPerAddress;
-        totalFees = 0;
     }
 
     function safeTransfer(
@@ -102,6 +100,8 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
             _from == msg.sender ||
                 allowance[_tokenId] == msg.sender ||
                 IOwnersContract(ownersContract).addressOf("Character") ==
+                msg.sender ||
+                IOwnersContract(ownersContract).addressOf("Weapon") ==
                 msg.sender,
             "Not the owner"
         );
@@ -138,11 +138,17 @@ abstract contract ERC721 is IERC721, ERC721TokenReceiver {
 
     function collectFee() external {
         require(msg.sender == ownersContract, "Not owners contract");
+<<<<<<< HEAD
         require(totalFees > 0, "zero balance");
         console.log("balance", address(this).balance);
         console.log("total fees", totalFees);
         payable(ownersContract).transfer(address(this).balance);
         totalFees = 0;
+=======
+        require(balanceOf[ownersContract] > 0, "zero balance");
+        payable(msg.sender).transfer(balanceOf[ownersContract]);
+        balanceOf[ownersContract] = 0;
+>>>>>>> 07da750fd4cbdbdad5e961344937a0b9b066582d
     }
 
     function setMintPrice(uint256 _mintPrice) external {
