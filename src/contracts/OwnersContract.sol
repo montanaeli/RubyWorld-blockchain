@@ -2,6 +2,9 @@
 pragma solidity 0.8.16;
 
 import "src/interfaces/IOwnersContract.sol";
+import "src/contracts/Character.sol";
+
+import "hardhat/console.sol";
 
 contract OwnersContract is IOwnersContract {
     uint256 public tokenSellFeePercentage;
@@ -20,7 +23,6 @@ contract OwnersContract is IOwnersContract {
         _;
     }
 
-    //TODO: check if this is ok
     modifier onlyEOA() {
         require(
             msg.sender == tx.origin,
@@ -34,11 +36,16 @@ contract OwnersContract is IOwnersContract {
         _;
     }
 
-    constructor(uint256 _tokenSellFreePercentage) {
-        tokenSellFeePercentage = _tokenSellFreePercentage;
+    constructor(uint256 _tokenSellFeePercentage) {
+        tokenSellFeePercentage = _tokenSellFeePercentage;
         ownersList[ownerIndex] = msg.sender;
         ownerIndex++;
     }
+
+    // fallback() external payable {
+    //     balanceOf[address(this)] += msg.value;
+    //     //TODO: check this
+    // }
 
     function owners(
         address _ownerAddress
@@ -77,11 +84,10 @@ contract OwnersContract is IOwnersContract {
     ) external onlyOwners {
         address soldContract = _addressOf[_contractName];
 
-        bytes memory collectFee = abi.encodeWithSignature("collectFee()");
-        (bool _success, ) = soldContract.staticcall(collectFee);
-        require(_success, "Call Failed");
-
-        uint256 balance = address(this).balance; // Ganancia recolectada
+        //TODO: hardcoded para character
+        // uint256 balance = Character(soldContract).totalFees();
+        Character(soldContract).collectFee();
+        uint256 balance = 0;
         require(balance > 0, "zero balance");
         uint256 feeEarned = balance / ownerIndex; // Divido en partes iguales para distribuir
         for (uint256 i = 0; i < ownerIndex; i++) {
